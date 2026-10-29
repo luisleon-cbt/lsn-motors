@@ -234,6 +234,33 @@
     .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---- stacked layout (v2, October 29 2026): the board uses the full width of the page, instructions and controls go below it ---- */
+  .app{display:block;height:auto;min-height:0}
+  .app>.lab-head{max-width:1240px;margin:0 auto;padding:18px 16px 14px}
+  .app>.lab-head h1{font-size:clamp(24px,3vw,32px);margin:4px 0 6px}
+  .app>.stage{width:100%;height:clamp(420px,70vh,860px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .panel{max-width:1240px;margin:0 auto;border-left:0;overflow:visible;background:none;display:block;columns:2 420px;column-gap:28px;padding:20px 16px 28px}
+  .panel>*{break-inside:avoid;margin:0 0 22px}
+  .panel>header,.panel>footer,.panel>.guide,.panel>.span-all{column-span:all}
+  /* how to use: numbered steps with the current one highlighted, plus a "do this now" line */
+  .guide{max-width:1240px;margin:0 auto;padding:18px 16px 4px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px 26px;align-items:start}
+  .guide h2{grid-column:1/-1;margin:0;font-size:18px}
+  .guide ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:s}
+  .guide ol.steps li{counter-increment:s;position:relative;padding:8px 10px 8px 44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--silk);font-size:15px;line-height:1.45}
+  .guide ol.steps li::before{content:counter(s);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--font-mono);background:var(--line);color:var(--silk)}
+  .guide ol.steps li.current{border-color:var(--cbt-gold);background:var(--panel-2)}
+  .guide ol.steps li.current::before{background:var(--cbt-gold);color:var(--cbt-navy)}
+  .guide ol.steps li.done{color:var(--silk-dim)}
+  .guide ol.steps li.done::before{content:"\2713";background:var(--ok);color:#06120f}
+  .guide ol.steps li b,.guide .now b{color:var(--cbt-gold);font-weight:600}
+  .guide .now{border-left:4px solid var(--cbt-sky);background:var(--panel-2);border-radius:6px;padding:14px 16px;font-size:16px;line-height:1.5;color:var(--silk)}
+  .guide .now .k{display:block;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);margin-bottom:4px}
+  .guide .tips{margin:10px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--silk-dim);display:grid;gap:4px}
+  @media(max-width:860px){.guide{grid-template-columns:1fr}.panel{columns:1}}
+  /* page mode: board card on top across the full width, the round or task below */
+  .card .stage.wide{aspect-ratio:21/9;min-height:360px}
+  @media(max-width:860px){.card .stage.wide{aspect-ratio:4/3;min-height:0}}
   /* ===== end of theme ===== */
 
   /* page-specific CSS: motor test bench (lab simulator). The middle right of the stage stays free for the zoom buttons. */
@@ -306,7 +333,20 @@
     .rt th{font-size:9.5px;padding:6px 2px}
     .loads .btn{font-size:11px}
   }
-  .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* layout v2: the panel below the board. Bench and safety side by side, then the table beside the graph, then the questions in two columns */
+  .lab-head .note{max-width:920px;margin-top:10px}
+  .duo,.results{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 30px;align-items:start}
+  .results{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  .duo .col{display:flex;flex-direction:column;gap:22px;min-width:0}
+  .narr .controls{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:4px}
+  .narr p{min-height:0}
+  #quiz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-top:10px}
+  #quiz .q{margin-top:0}
+  @media(min-width:861px){.rt th{font-size:10.5px}.rt td.v{font-size:13px}.rt input{font-size:13px;padding:7px 3px}}
+  @media(max-width:860px){.duo,.results,#quiz{grid-template-columns:1fr}}
+  @media(max-width:860px){.guide>h2{order:-2}.guide>div{order:-1}}   /* phones: "Do this now" right under the heading, before the numbered steps */
+  @media(max-width:520px){.narr .controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(min-width:861px){.stage:has(.nogl:not([hidden])) .flat{top:86px;height:calc(100% - 140px)}}
   @media(max-width:860px){.stage:has(.nogl:not([hidden])) .flat{top:150px;height:calc(100% - 215px)}}
 </style>
 </head>
@@ -319,7 +359,13 @@
 </header>
 
 <div class="app">
-  <section class="stage" id="stage" aria-label="3D motor test bench. Drag to orbit, use the zoom buttons or scroll to zoom, click a part to learn what it does. Every control is also in the side panel.">
+  <header class="lab-head">
+    <p class="eyebrow">LSN-MOTORS · Lesson 1 · Lab simulator</p>
+    <h1>Motor test bench</h1>
+    <p class="lede">Load the conveyor motor, read the tachometer and the clamp meter, and calculate slip and rotor frequency at each load.</p>
+    <p class="note">Practice here before you measure the real motor trainer. The readings come from a <b>simplified teaching model</b> (it leaves out the stator resistance and other losses) with a little random meter noise, so your real trainer will read a bit differently. Real motors also draw roughly 5 to 7 times full-load current at start.</p>
+  </header>
+  <section class="stage" id="stage" aria-label="3D motor test bench. Drag to orbit, use the zoom buttons or scroll to zoom, click a part to learn what it does. Every control is also below the board.">
     <div class="hud hud-top">
       <ol class="phases" aria-label="Lab procedure">
         <li data-p="safety" style="--c:var(--ctrl)">Safety</li>
@@ -347,88 +393,106 @@
         <button type="button" id="follow" class="on" aria-pressed="true">Follow</button>
       </div>
     </div>
-    <div class="nogl" id="nogl" hidden>The 3D view needs WebGL and the 3D libraries, which are not available here. The flat bench below works the same way.</div>
+    <div class="nogl" id="nogl" hidden>The 3D view needs WebGL and the 3D libraries, which are not available here. This flat bench works the same way.</div>
+  </section>
+
+  <section class="guide" aria-labelledby="guideTitle">
+    <h2 id="guideTitle">How to use this lab</h2>
+    <ol class="steps" id="howSteps">
+      <li data-h="1">Read the five rules in <b>Safety check</b> below and tick every box. The instructor will not start the trainer until all five are ticked.</li>
+      <li data-h="2">In <b>Bench controls</b>, press <b>Apply tape</b> while the trainer is locked out. A small square of reflective tape appears on the shaft on the board above. The laser tachometer counts one pulse each time the tape passes.</li>
+      <li data-h="3">Press <b>Instructor: energize</b> to start the motor. Leave the load at <b>0%</b> and press <b>Take reading</b>. The speed (RPM) and the current (A) show on the meters and in the first row of the results table.</li>
+      <li data-h="4">Press the next load button, <b>25%</b>, then press <b>Take reading</b>. Repeat for <b>50%</b>, <b>75%</b>, <b>100%</b>, and <b>125%</b>. You are done when the results table has six rows.</li>
+      <li data-h="5">In the results table, type the slip s (how far the rotor falls behind the field, as a decimal), the % slip, and fr (the rotor frequency) for every row. Press <b>Check calculations</b>. A red box comes with the worked math under the table: fix it and check again.</li>
+      <li data-h="6">Look at the graph next to the table: the speed falls and the current climbs as the load grows. Answer the four <b>Questions</b> below it. Your score out of 100 is in <b>Your score</b>.</li>
+    </ol>
+    <div>
+      <div class="now" aria-live="polite"><span class="k">Do this now</span><span id="nowText">Tick the five boxes in <b>Safety check</b> below.</span></div>
+      <ul class="tips">
+        <li>Want a narrated walk-through? Press <b>Start guide</b> below the board. <b>Next step</b> moves on, <b>Step back</b> goes back one step, and <b>Show me</b> jumps to the part of the page for that step.</li>
+        <li>Click any part on the board to read what it does.</li>
+        <li>Drag on the board to turn it. Use <b>+</b>, <b>&minus;</b>, and <b>FIT</b> to zoom, the arrows to move, or the view buttons on the board (Overview, Shaft, Meters, Follow).</li>
+        <li>Keyboard: Space goes to the next guide step, B steps back, + and - zoom, 0 shows the whole bench.</li>
+      </ul>
+    </div>
   </section>
 
   <aside class="panel">
-    <header>
-      <p class="eyebrow">LSN-MOTORS · Lesson 1 · Lab simulator</p>
-      <h1>Motor test bench</h1>
-      <p class="lede">Load the conveyor motor, read the tachometer and the clamp meter, and calculate slip and rotor frequency at each load.</p>
-    </header>
-    <p class="note">Practice here before you measure the real motor trainer. The readings come from a <b>simplified teaching model</b> (it leaves out the stator resistance and other losses) with a little random meter noise, so your real trainer will read a bit differently. Real motors also draw roughly 5 to 7 times full-load current at start.</p>
+    <div class="span-all duo">
+      <div class="col">
+        <section class="narr" aria-live="polite">
+          <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 7</span></div>
+          <p id="narration">Press Start guide for a narrated walk through the lab, or follow the steps above on your own.</p>
+          <div class="controls">
+            <button type="button" class="btn" id="btnBack">Step back</button>
+            <button type="button" class="btn primary" id="btnStep">Start guide</button>
+            <button type="button" class="btn" id="btnShow">Show me</button>
+            <button type="button" class="btn" id="btnReset">Restart guide</button>
+          </div>
+        </section>
 
-    <section class="narr" aria-live="polite">
-      <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 7</span></div>
-      <p id="narration">Press Next step for the guided procedure, or work through the panel on your own.</p>
-    </section>
-    <div>
-      <div class="controls">
-        <button type="button" class="btn" id="btnBack">Step back</button>
-        <button type="button" class="btn primary" id="btnStep">Next step</button>
-        <button type="button" class="btn" id="btnShow">Show me</button>
-        <button type="button" class="btn" id="btnReset">Restart guide</button>
+        <section id="secSafety" aria-labelledby="hSafety">
+          <h2 id="hSafety">Safety check <small>(10 points)</small></h2>
+          <p class="note safe">The instructor energizes and de-energizes the trainer. You measure and record. Keep hands and loose clothing away from the shaft, and keep the guard in place.</p>
+          <div class="checklist" id="checklist">
+            <label><input type="checkbox" data-s="0"><span>The instructor energizes and de-energizes the trainer. I only measure and record.</span></label>
+            <label><input type="checkbox" data-s="1"><span>The shaft guard stays in place whenever the motor can turn.</span></label>
+            <label><input type="checkbox" data-s="2"><span>My hands, loose clothing, long hair, and jewelry stay away from the shaft and the coupling.</span></label>
+            <label><input type="checkbox" data-s="3"><span>The reflective tape goes on only with the trainer locked out and tagged out, never on a turning shaft.</span></label>
+            <label><input type="checkbox" data-s="4"><span>I never aim the laser tachometer at anyone's eyes, and I clamp only one line lead with the meter set to AC amps.</span></label>
+          </div>
+        </section>
       </div>
-      <p class="hint" style="margin-top:8px">Keyboard: Space goes to the next step, B steps back, + and - zoom, 0 shows the whole bench.</p>
+      <div class="col">
+        <section id="secBench" aria-labelledby="hBench">
+          <h2 id="hBench">Bench controls</h2>
+          <div class="row2">
+            <button type="button" class="btn" id="btnPower" aria-pressed="false">Instructor: energize</button>
+            <button type="button" class="btn" id="btnTape">Apply tape</button>
+          </div>
+          <p class="lbl" id="loadLbl">Brake load (percent of rated torque)</p>
+          <div class="loads" role="group" aria-labelledby="loadLbl" id="loads"></div>
+          <button type="button" class="btn primary take" id="btnRead">Take reading</button>
+          <p class="msg" id="benchMsg" aria-live="polite">Finish the safety check first. Then the instructor can energize the trainer.</p>
+          <div class="regs" id="regs" style="margin-top:6px"></div>
+          <p class="hint" id="seedNote" style="margin-top:8px"></p>
+        </section>
+      </div>
     </div>
 
-    <section id="secSafety" aria-labelledby="hSafety">
-      <h2 id="hSafety">Safety check <small>(10 points)</small></h2>
-      <p class="note safe">The instructor energizes and de-energizes the trainer. You measure and record. Keep hands and loose clothing away from the shaft, and keep the guard in place.</p>
-      <div class="checklist" id="checklist">
-        <label><input type="checkbox" data-s="0"><span>The instructor energizes and de-energizes the trainer. I only measure and record.</span></label>
-        <label><input type="checkbox" data-s="1"><span>The shaft guard stays in place whenever the motor can turn.</span></label>
-        <label><input type="checkbox" data-s="2"><span>My hands, loose clothing, long hair, and jewelry stay away from the shaft and the coupling.</span></label>
-        <label><input type="checkbox" data-s="3"><span>The reflective tape goes on only with the trainer locked out and tagged out, never on a turning shaft.</span></label>
-        <label><input type="checkbox" data-s="4"><span>I never aim the laser tachometer at anyone's eyes, and I clamp only one line lead with the meter set to AC amps.</span></label>
-      </div>
-    </section>
+    <div class="span-all results">
+      <section id="secTable" aria-labelledby="hTable">
+        <h2 id="hTable">Results table <small>(12 points for readings, 54 for calculations)</small></h2>
+        <div class="scroll-x">
+          <table class="rt" aria-label="Readings and your calculations">
+            <colgroup><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:22%"><col style="width:19%"><col style="width:18%"></colgroup>
+            <thead><tr><th scope="col">Load</th><th scope="col">Nr RPM</th><th scope="col">I (A)</th><th scope="col">Slip s</th><th scope="col">% slip</th><th scope="col">fr (Hz)</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <p class="units">Ns = 120 × f / P = 120 × 60 / 4 = 1800 RPM. Slip s = (Ns - Nr) / Ns as a decimal. Percent slip = s × 100. fr = s × f. Tolerance: 0.2 percentage points for slip and 0.1 Hz for fr.</p>
+        <div class="row2" style="margin-top:10px">
+          <button type="button" class="btn primary" id="btnCheck">Check calculations</button>
+          <span class="hint" id="calcCount" style="align-self:center"></span>
+        </div>
+        <div class="feedback info" id="checkOut" hidden></div>
+      </section>
 
-    <section id="secBench" aria-labelledby="hBench">
-      <h2 id="hBench">Bench controls</h2>
-      <div class="row2">
-        <button type="button" class="btn" id="btnPower" aria-pressed="false">Instructor: energize</button>
-        <button type="button" class="btn" id="btnTape">Apply tape</button>
-      </div>
-      <p class="lbl" id="loadLbl">Load on the brake (percent of rated torque)</p>
-      <div class="loads" role="group" aria-labelledby="loadLbl" id="loads"></div>
-      <button type="button" class="btn primary take" id="btnRead">Take reading</button>
-      <p class="msg" id="benchMsg" aria-live="polite">Finish the safety check first. Then the instructor can energize the trainer.</p>
-      <div class="regs" id="regs" style="margin-top:6px"></div>
-      <p class="hint" id="seedNote" style="margin-top:8px"></p>
-    </section>
+      <section id="secGraph" aria-labelledby="hGraph">
+        <h2 id="hGraph">Speed and current against load</h2>
+        <svg class="chart" id="chart" viewBox="0 0 360 236" role="img" aria-label="Chart of speed and current against load"></svg>
+        <div class="chartkey" aria-hidden="true">
+          <span style="--c:#6FD49B"><i></i>speed, RPM (left)</span>
+          <span style="--c:#38B0E0"><i></i>current, A (right)</span>
+          <span style="--c:#E0B840"><i class="dash"></i>Ns and FLA</span>
+          <span style="--c:#aeb3c9"><i class="dash"></i>teaching model</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="showModel"> Show the teaching model lines</label>
+        <p class="hint" id="chartText" style="margin-top:6px"></p>
+      </section>
+    </div>
 
-    <section id="secTable" aria-labelledby="hTable">
-      <h2 id="hTable">Results table <small>(12 points for readings, 54 for calculations)</small></h2>
-      <div class="scroll-x">
-        <table class="rt" aria-label="Readings and your calculations">
-          <colgroup><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:22%"><col style="width:19%"><col style="width:18%"></colgroup>
-          <thead><tr><th scope="col">Load</th><th scope="col">Nr RPM</th><th scope="col">I (A)</th><th scope="col">Slip s</th><th scope="col">% slip</th><th scope="col">fr (Hz)</th></tr></thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-      <p class="units">Ns = 120 × f / P = 120 × 60 / 4 = 1800 RPM. Slip s = (Ns - Nr) / Ns as a decimal. Percent slip = s × 100. fr = s × f. Tolerance: 0.2 percentage points for slip and 0.1 Hz for fr.</p>
-      <div class="row2" style="margin-top:10px">
-        <button type="button" class="btn primary" id="btnCheck">Check calculations</button>
-        <span class="hint" id="calcCount" style="align-self:center"></span>
-      </div>
-      <div class="feedback info" id="checkOut" hidden></div>
-    </section>
-
-    <section id="secGraph" aria-labelledby="hGraph">
-      <h2 id="hGraph">Speed and current against load</h2>
-      <svg class="chart" id="chart" viewBox="0 0 360 236" role="img" aria-label="Chart of speed and current against load"></svg>
-      <div class="chartkey" aria-hidden="true">
-        <span style="--c:#6FD49B"><i></i>speed, RPM (left)</span>
-        <span style="--c:#38B0E0"><i></i>current, A (right)</span>
-        <span style="--c:#E0B840"><i class="dash"></i>Ns and FLA</span>
-        <span style="--c:#aeb3c9"><i class="dash"></i>teaching model</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="showModel"> Show the teaching model lines</label>
-      <p class="hint" id="chartText" style="margin-top:6px"></p>
-    </section>
-
-    <section id="secQuiz" aria-labelledby="hQuiz">
+    <section class="span-all" id="secQuiz" aria-labelledby="hQuiz">
       <h2 id="hQuiz">Questions <small>(24 points, your first answer counts)</small></h2>
       <div id="quiz"></div>
     </section>
@@ -460,6 +524,11 @@
 "use strict";
 const hasGSAP = typeof window.gsap !== 'undefined';
 const $ = s => document.querySelector(s);
+// guide block: mark the current step (1-based) and say the single next action
+function guide(stepNo, nowHtml) {
+  document.querySelectorAll('#howSteps li').forEach(li => { const n = +li.dataset.h; li.classList.toggle('done', n < stepNo); li.classList.toggle('current', n === stepNo); });
+  if (nowHtml) document.getElementById('nowText').innerHTML = nowHtml;
+}
 // LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
 // Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
 // Returns null when any of them (or WebGL) is missing: then draw the 2D fallback.
@@ -686,11 +755,15 @@ function Lab3D(stage, opts) {
     if (name === 'overview' || !views[name]) {
       // the overview (and FIT) must show the whole board width, also on narrow phone screens,
       // leaving room for the zoom buttons at the right edge
-      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      // and, on wide stages, fill the stage: the board fits both the width and the height of the view, no more, no less
+      const tanV = Math.tan(T.MathUtils.degToRad(camera.fov / 2)), tanH = tanV * camera.aspect;
+      const dist0 = pos.distanceTo(tgt), sinE = Math.max(0.3, (pos.y - tgt.y) / dist0);
       const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
-      f = Math.max(f, need / pos.distanceTo(tgt));
-      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
-      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+      const needD = (B.d / 2 * sinE + 0.8) / (tanV * 0.78) + B.d * 0.25;   // 0.78 leaves room for the HUD bars at the top and bottom
+      f = Math.max(need, needD) / dist0;
+      const need2 = Math.max(need, needD);
+      controls.maxDistance = Math.max(controls.maxDistance, need2 * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need2 * 1.1); scene.fog.far = Math.max(scene.fog.far, need2 * 2.6); }
     }
     pos.sub(tgt).multiplyScalar(f).add(tgt);
     return {pos: pos, tgt: tgt};
@@ -954,9 +1027,9 @@ const INFO = {
 // ---- 3D bench ----
 function Graphics3D(stage) {
   const lab = Lab3D(stage, {board: {w: BOARD.w, d: BOARD.d, silk: 'CBT TECHNOLOGY INSTITUTE  LSN-MOTORS  MOTOR TRAINER BENCH 2', seed: 23},
-    views: {overview: {pos: [0, 14, 9.5], tgt: [0, 0.4, 0.5], want: 1.2}, shaft: {pos: [-0.4, 4.6, 6.6], tgt: [-0.9, 1.0, 0.6], want: 1.25},
-      meters: {pos: [-6.8, 7.6, 2.0], tgt: [-4.6, 0.2, -2.6], want: 1.25}, brake: {pos: [3.8, 5.2, 6.6], tgt: [3.4, 0.8, -0.8], want: 1.3},
-      plate: {pos: [-3.4, 5.6, 7.4], tgt: [-3.5, 0.4, 1.8], want: 1.3}}});
+    views: {overview: {pos: [0, 14, 9.5], tgt: [0, 0.4, 0.5], want: 1.2}, shaft: {pos: [-0.25, 5.68, 8.4], tgt: [-0.9, 1.0, 0.6], want: 0.96},
+      meters: {pos: [-5.6, 10.2, 2.4], tgt: [-5.0, 0.3, -2.7], want: 1.0}, brake: {pos: [3.88, 6.08, 8.08], tgt: [3.4, 0.8, -0.8], want: 1.08},
+      plate: {pos: [-3.38, 6.64, 8.52], tgt: [-3.5, 0.4, 1.8], want: 1.08}}});   // framed for the full-width stage (wide), and the same distance as before on narrow screens
   if (!lab) return null;
   const T = lab.T, scene = lab.scene, R = lab.recs;
   const lin = c => new T.Color(c).convertSRGBToLinear();
@@ -1265,50 +1338,76 @@ const visRev = rpm => 0.3 + Math.max(0, rpm - 1690) / 110 * 1.5;   // on-screen 
 function exampleRow() { const L = S.readings[100] ? 100 : LOADS.find(L => S.readings[L]); return L == null ? {L: null, rpm: MOTOR.nameRpm} : {L: L, rpm: S.readings[L].rpm}; }
 const GUIDE = [
   {p: 'safety', view: 'shaft', sec: '#secSafety', done: safetyDone,
-    text: () => 'Safety first. On the real trainer the instructor energizes and de-energizes the motor, and you measure and record. The guard stays in place, and hands, loose clothing, long hair, and jewelry stay away from the shaft and the coupling. Tick all five items in the safety check.'
+    text: () => 'Safety first. On the real trainer the instructor energizes and de-energizes the motor. You measure and record. The guard stays in place, and hands, loose clothing, long hair, and jewelry stay away from the shaft and the coupling. Tick all five boxes in Safety check, below this box.'
       + (safetyDone() ? ' All five are ticked. Press Next step.' : ''),
     show: () => { G.clear(); G.hi('supply', C.coral); G.hi('guard', C.coral); }},
   {p: 'tape', view: 'shaft', sec: '#secBench', done: () => S.tape,
-    text: () => S.on ? 'The trainer is running. Tape never goes on a turning shaft: ask the instructor to stop and lock out the trainer first (press Instructor: stop and lock out).'
+    text: () => S.on ? 'The trainer is running. Tape never goes on a turning shaft. Press Instructor: stop and lock out first, then press Apply tape.'
       : S.tape ? 'The tape is on the shaft. The laser tachometer counts one pulse each time the tape passes, and pulses per minute are the RPM. Press Next step.'
-      : 'The tachometer needs a target. With the trainer locked out and tagged out, the guard comes off, one small square of reflective tape goes on the shaft, and the guard goes back on. The laser counts one pulse each time the tape passes. Press Apply tape.',
+      : 'The tachometer needs a target. With the trainer locked out and tagged out (lock and tag on the disconnect), the guard comes off, one small square of reflective tape goes on the shaft, and the guard goes back on. The laser counts one pulse each time the tape passes. Press Apply tape in Bench controls.',
     show: () => { G.clear(); G.tapeHint(); G.hi('guard', C.ice); }},
   {p: 'noload', view: 'overview', sec: '#secBench', done: () => !!S.readings[0],
     text: () => { const r = S.readings[0];
       if (r) return 'Your no-load reading: ' + r.rpm + ' RPM and ' + r.amps.toFixed(2) + ' A. The rotor runs close to Ns, 1800 RPM, but never reaches it: with no slip, the field would not cut the rotor bars, so there would be no rotor current and no torque. The current is not zero either. Most of it is the magnetizing current that builds the field.';
-      return 'Now the instructor energizes the trainer' + (S.on ? ' (done)' : ' (press Instructor: energize)') + '. Set the load to 0% and press Take reading. Aim the laser at the tape, never at anyone\'s eyes. The clamp meter goes around one line lead only.'; },
+      return (S.on ? 'The trainer is running. ' : 'Press Instructor: energize to start the motor. ') + 'Set the brake load to 0% and press Take reading. On the real trainer, aim the laser at the tape, never at anyone\'s eyes, and clamp the meter around one line lead only.'; },
     show: () => { G.clear(); G.hi('tach', C.green); G.hi('clamp', C.sky); }},
   {p: 'load', view: 'brake', sec: '#secBench', done: () => nReadings() === 6,
     text: () => { const n = nReadings(), r = S.readings[125];
-      let t = 'Add load with the brake in steps of 25%, up to 125%, and take a reading at each step. The brake pulls back on the shaft and the rotor slows a little. The slip grows, so the field cuts the rotor bars faster. That makes more rotor current and more torque, until the motor torque matches the load. You have ' + n + ' of 6 readings.';
+      const nx = LOADS.find(L => !S.readings[L]);
+      let t = 'Add load with the brake in steps of 25%, up to 125%, and take a reading at each step. The brake pulls back on the shaft and the rotor slows a little. The slip grows, so the field cuts the rotor bars faster. That makes more rotor current and more torque, until the motor torque matches the load. You have ' + n + ' of 6 readings.' + (nx != null ? ' Next: set the brake load to ' + nx + '% and press Take reading.' : '');
       if (r) t += ' At 125% the clamp meter reads ' + r.amps.toFixed(2) + ' A, above the FLA of 2.4 A: the motor is overloaded, so the instructor runs it there only for a short test.';
       return t; },
     show: () => { G.clear(); G.hi('brake', C.gold); G.hi('loadctl', C.gold); G.flyLoad(S.load); }},
   {p: 'calc', view: 'plate', sec: '#secTable', done: () => calcList().length === 18 && calcList().every(f => f.ok),
     text: () => { const e = exampleRow(), E = expectedCalc(e.rpm);
-      return 'Calculate each row. Example with ' + (e.L == null ? 'the nameplate speed, ' : 'your ' + e.L + '% reading, ') + e.rpm + ' RPM: slip speed = 1800 - ' + e.rpm + ' = ' + E.slipSpeed + ' RPM. s = ' + E.slipSpeed + ' / 1800 = ' + E.slip.toFixed(4) + '. Percent slip = ' + E.pct.toFixed(2) + '%. fr = ' + E.slip.toFixed(4) + ' × 60 = ' + E.fr.toFixed(2) + ' Hz. Divide by Ns, not by the rotor speed. Type your answers in the results table and press Check calculations.'; },
+      return 'Calculate each row. Example with ' + (e.L == null ? 'the nameplate speed, ' : 'your ' + e.L + '% reading, ') + e.rpm + ' RPM: slip speed = 1800 - ' + e.rpm + ' = ' + E.slipSpeed + ' RPM. s = ' + E.slipSpeed + ' / 1800 = ' + E.slip.toFixed(4) + '. Percent slip = ' + E.pct.toFixed(2) + '%. fr = ' + E.slip.toFixed(4) + ' × 60 = ' + E.fr.toFixed(2) + ' Hz. Divide by Ns, not by the rotor speed. Type your answers in the results table below and press Check calculations.'; },
     show: () => { G.clear(); G.hi('plate', C.peri); }},
   {p: 'graph', view: 'overview', sec: '#secGraph', done: null,
     text: () => nReadings() < 2 ? 'The graph needs at least two readings. Take more readings, then come back to this step.'
-      : 'Look at the graph. The speed falls almost in a straight line, about 20 RPM for each 25% of load. The current starts at the magnetizing current and climbs faster as the load grows, past the FLA line at 125%. Tick Show the teaching model lines to compare your points with the model.',
+      : 'Look at the graph next to the results table. The speed falls almost in a straight line, about 20 RPM for each 25% of load. The current starts at the magnetizing current and climbs faster as the load grows, past the FLA line at 125%. Tick Show the teaching model lines to compare your points with the model. Then press Next step.',
     show: () => { G.clear(); }},
   {p: 'quiz', view: 'overview', sec: '#secQuiz', done: () => S.quiz.every(q => q != null),
-    text: () => 'Answer the four questions at the end of the panel. Each one is worth 6 points and your first answer counts. Your score so far: ' + curScore().total + ' out of 100. The breakdown is under Your score.',
+    text: () => 'Answer the four questions in Questions, below the graph. Each one is worth 6 points and your first answer counts. Your score so far: ' + curScore().total + ' out of 100. The breakdown is in Your score.',
     show: () => { G.clear(); }}
 ];
 function setPhase(p) { document.querySelectorAll('.phases li').forEach(li => li.classList.toggle('on', li.dataset.p === p)); const li = document.querySelector('.phases li[data-p="' + p + '"]'); $('#phaseTag').textContent = li ? li.textContent : 'Ready'; $('#phaseTag').style.setProperty('--pc', li ? getComputedStyle(li).getPropertyValue('--c') : 'var(--silk-dim)'); }
 function go(i) {
   gi = Math.max(0, Math.min(GUIDE.length, i));
   document.querySelectorAll('.panel section.focus').forEach(s => s.classList.remove('focus'));
-  if (!gi) { setPhase(null); $('#narration').textContent = 'Press Next step for the guided procedure, or work through the panel on your own.'; G.clear(); if (follow) G.view('overview'); renderGuide(); return; }
+  if (!gi) { setPhase(null); $('#narration').textContent = 'Press Start guide for a narrated walk through the lab, or follow the steps above on your own.'; G.clear(); if (follow) G.view('overview'); renderGuide(); return; }
   const st = GUIDE[gi - 1]; setPhase(st.p); $('#narration').textContent = st.text(); st.show();
   if (follow) G.view(st.view);
   const sec = $(st.sec); if (sec) sec.classList.add('focus');
   renderGuide();
 }
 function refreshNarr() { if (gi) $('#narration').textContent = GUIDE[gi - 1].text(); }
-function maybeAdvance() { if (!gi || gi >= GUIDE.length) { refreshNarr(); return; } const st = GUIDE[gi - 1]; if (st.done && st.done()) go(gi + 1); else refreshNarr(); }
-function renderGuide() { $('#hudStep').textContent = gi; $('#ctx').textContent = 'Step ' + gi + ' of ' + GUIDE.length; $('#btnBack').disabled = gi === 0; $('#btnStep').disabled = gi >= GUIDE.length; $('#btnStep').textContent = gi ? 'Next step' : 'Start guide'; }
+function maybeAdvance() { if (!gi || gi >= GUIDE.length) { refreshNarr(); updateNow(); return; } const target = Math.min(GUIDE.length, progress()[0]); if (target > gi) go(target); else refreshNarr(); updateNow(); }
+// "Do this now": the single next action, worked out from what the student has really done (guide steps 1 to 6; 7 means finished)
+function progress() {
+  const nS = S.safety.filter(Boolean).length;
+  if (nS < 5) return [1, 'Tick the ' + (5 - nS === 1 ? 'last box' : (5 - nS) + ' unticked boxes') + ' in <b>Safety check</b> below (' + nS + ' of 5 ticked).'];
+  if (!S.tape) return [2, S.on ? 'The motor is running, and tape never goes on a turning shaft. Press <b>Instructor: stop and lock out</b>.' : 'Press <b>Apply tape</b> in <b>Bench controls</b>. The trainer is locked out, so the shaft is safe to touch.'];
+  const miss = LOADS.find(L => !S.readings[L]);
+  if (miss != null) {
+    const st = miss === 0 ? 3 : 4;
+    if (busy) return [st, 'Wait a moment. The meters on the board are settling at ' + S.load + '% load.'];
+    if (!S.on) return [st, 'Press <b>Instructor: energize</b> to start the motor.'];
+    if (S.load !== miss) return [st, 'Set the brake load to <b>' + miss + '%</b> and press <b>Take reading</b>.'];
+    return [st, 'Press <b>Take reading</b> for the ' + miss + '% row. Watch the tachometer and the clamp meter on the board above.'];
+  }
+  let empty = null, bad = null, unchecked = false;
+  LOADS.forEach(L => KINDS.forEach(k => { const v = String(S.entries[L][k] || '').trim(), m = S.marks[L] && S.marks[L][k];
+    if (!v) { if (empty == null) empty = L; } else if (!m) unchecked = true; else if (m.status !== 'ok' && !bad) bad = [L, k]; }));
+  if (bad) return [5, 'Fix the red box (' + KNAME[bad[1]] + ', ' + bad[0] + '% row). Read the worked math under the table, type the new value, and press <b>Check calculations</b>.'];
+  if (empty != null) return [5, 'In the results table, type the slip s, the % slip, and fr for the <b>' + empty + '%</b> row (Nr = ' + S.readings[empty].rpm + ' RPM). Then press <b>Check calculations</b>.'];
+  if (unchecked) return [5, 'Press <b>Check calculations</b> under the results table.'];
+  const qi = S.quiz.findIndex(q => q == null);
+  if (qi >= 0) return [6, (qi === 0 ? 'Look at the graph next to the results table. Then answer ' : 'Answer ') + '<b>Question ' + (qi + 1) + '</b> in Questions below the graph.'];
+  const t = curScore().total;
+  return [7, 'Lab finished. Your score is <b>' + t + ' out of 100</b>' + (t < 100 ? ' (the breakdown is in Your score)' : '') + '. Next, take the same readings on the real trainer and compare them with these.'];
+}
+function updateNow() { const p = progress(); guide(p[0], p[1]); }
+function renderGuide() { updateNow(); $('#hudStep').textContent = gi; $('#ctx').textContent = 'Step ' + gi + ' of ' + GUIDE.length; $('#btnBack').disabled = gi === 0; $('#btnStep').disabled = gi >= GUIDE.length; $('#btnStep').textContent = gi ? 'Next step' : 'Start guide'; }
 
 // ---- bench ----
 function say(html) { $('#benchMsg').innerHTML = html; }
@@ -1335,9 +1434,9 @@ function renderBench() {
 function togglePower() {
   if (busy) return;
   if (!S.on) {
-    if (!safetyDone()) { say('The instructor will not energize the trainer until all five safety items are ticked.'); return; }
+    if (!safetyDone()) { say('The instructor will not energize the trainer until all five safety items are ticked. Tick the rest of the boxes in Safety check.'); updateNow(); return; }
     S.on = true; G.setPower(true);
-    say('The instructor removes the lock and tag, closes the disconnect, and starts the motor. Stand clear of the shaft.' + (S.tape ? '' : ' There is no tape on the shaft yet, so the tachometer has nothing to count.'));
+    say('The instructor removes the lock and tag, closes the disconnect, and starts the motor. Stand clear of the shaft.' + (S.tape ? ' Set the brake load and press Take reading.' : ' There is no tape on the shaft yet, so the tachometer has nothing to count. Press Instructor: stop and lock out, then press Apply tape.'));
   } else {
     S.on = false; G.setPower(false);
     say('The instructor stops the motor, opens the disconnect, and puts on a lock and a tag. The shaft coasts to a stop.');
@@ -1346,18 +1445,18 @@ function togglePower() {
 }
 function applyTape() {
   if (busy) return;
-  if (S.on) { say('Not on a turning shaft. Ask the instructor to stop the motor and lock out the trainer first.'); refreshNarr(); return; }
+  if (S.on) { say('Not on a turning shaft. Press Instructor: stop and lock out first, then press Apply tape.'); refreshNarr(); updateNow(); return; }
   if (S.tape) { say('The tape is already on the shaft.'); return; }
   S.tape = true; G.setTape(true, true); G.setMeters(null, null);
-  say('Locked out and tagged out. The guard comes off, one small square of reflective tape goes on the shaft, and the guard goes back on.');
+  say('Locked out and tagged out. The guard comes off, one small square of reflective tape goes on the shaft, and the guard goes back on. Next, press Instructor: energize.');
   renderBench(); maybeAdvance();
 }
 function setLoad(L) {
   if (busy) return;
   S.load = L; G.setLoad(L); renderLoads(); renderBench();
-  say('Load set to ' + L + '%.' + (S.on ? ' The brake pulls on the shaft and the motor settles at its new speed. Take a reading.' : ' The trainer is locked out, so nothing turns yet.'));
+  say('Load set to ' + L + '%.' + (S.on ? ' The brake pulls on the shaft and the motor settles at its new speed. Press Take reading.' : ' The trainer is locked out, so nothing turns yet. Press Instructor: energize.'));
   if (gi && GUIDE[gi - 1].p === 'load' && hasGSAP) G.flyLoad(L);
-  refreshNarr();
+  refreshNarr(); updateNow();
 }
 function countUp(from, to, ms) {
   return new Promise(res => {
@@ -1370,16 +1469,16 @@ function countUp(from, to, ms) {
 }
 function takeReading() {
   if (busy) return Promise.resolve(false);
-  if (!S.on) { say('The trainer is locked out, so the motor is not turning. Ask the instructor to energize it (Instructor: energize).'); return Promise.resolve(false); }
-  if (!S.tape) { G.noSignal(); say('The tachometer shows no signal: there is no reflective tape on the shaft for the laser to count. Ask the instructor to stop and lock out the trainer, then apply the tape.'); return Promise.resolve(false); }
+  if (!S.on) { say('The trainer is locked out, so the motor is not turning. Press Instructor: energize first.'); updateNow(); return Promise.resolve(false); }
+  if (!S.tape) { G.noSignal(); say('The tachometer shows no signal: there is no reflective tape on the shaft for the laser to count. Press Instructor: stop and lock out, then press Apply tape.'); updateNow(); return Promise.resolve(false); }
   const L = S.load, r = reading(seed, L), had = !!S.readings[L];
-  busy = true; renderBench();
+  busy = true; renderBench(); updateNow();
   const from = S.last ? {rpm: S.last.rpm, amps: S.last.amps} : {rpm: 0, amps: 0};
   return Promise.all([G.measure(r), countUp(from, r, 1100)]).then(() => {
     busy = false; S.last = {rpm: r.rpm, amps: r.amps};
     if (!had) { S.readings[L] = {rpm: r.rpm, amps: r.amps}; S.entries[L] = {slip: '', pct: '', fr: ''}; newRow = L; renderRows(); renderChart(); }
     say('Reading at ' + L + '% load: <b>' + r.rpm + ' RPM</b> and <b>' + r.amps.toFixed(2) + ' A</b>. ' + (had ? 'This row is already in the results table.' : 'Added to the results table (' + nReadings() + ' of 6).')
-      + (L === 125 ? ' That is above the FLA of 2.4 A: an overload.' : '') + (nReadings() < 6 && !had ? ' Pick the next load.' : ''));
+      + (L === 125 ? ' That is above the FLA of 2.4 A: an overload.' : '') + (nReadings() < 6 && !had ? ' Press the next load button.' : nReadings() === 6 && !had ? ' All six readings are in. Now fill in the calculations in the results table.' : ''));
     renderBench(); renderScore(); maybeAdvance();
     return true;
   });
@@ -1401,10 +1500,11 @@ function onEntry(e) {
   const t = e.target; if (!t.dataset || !t.dataset.k) return;
   const L = +t.dataset.l, k = t.dataset.k; S.entries[L][k] = t.value;
   if (S.marks[L] && S.marks[L][k]) { delete S.marks[L][k]; t.parentNode.className = ''; renderScore(); }
+  updateNow();
 }
 function check() {
   const loads = LOADS.filter(L => S.readings[L]); const out = $('#checkOut'); out.hidden = false;
-  if (!loads.length) { out.className = 'feedback info'; out.innerHTML = '<p>Take readings first. Each one adds a row to the table.</p>'; return; }
+  if (!loads.length) { out.className = 'feedback info'; out.innerHTML = '<p>Take readings first. Each reading adds a row to this table: set the brake load and press Take reading.</p>'; return; }
   const bad = [], empty = []; let ok = 0;
   loads.forEach(L => {
     const rpm = S.readings[L].rpm, res = checkRow(rpm, S.entries[L]); S.marks[L] = res;
@@ -1499,6 +1599,7 @@ function renderScore() {
   $('#scoreNote').textContent = sc.total === 100 ? 'Full marks. Now take the same readings on the real trainer and compare them with these.'
     : (todo.length ? 'To finish: ' + todo.join(', ') + '. ' : '') + 'A calculation is worth 3 points when it is right at the first check and 2 points when you fix it after a check.';
   $('#calcCount').textContent = sc.calcOk + ' of 18 right';
+  updateNow();
 }
 
 // ---- start ----
@@ -1509,7 +1610,7 @@ G.onPick = k => { $('#info').innerHTML = INFO[k] || ''; };
 if (stage.clientWidth < 700) { follow = false; $('#follow').classList.remove('on'); $('#follow').setAttribute('aria-pressed', 'false'); }
 G.setPower(false); G.setLoad(0); G.setTape(false); setMeterText(null, null);
 $('#checklist').addEventListener('change', e => { const i = e.target.dataset.s; if (i == null) return; S.safety[+i] = e.target.checked;
-  if (safetyDone()) say('Safety check complete. The instructor can energize the trainer once the tape is on the shaft.'); renderScore(); maybeAdvance(); });
+  if (safetyDone()) say('Safety check complete. Next, press Apply tape while the trainer is locked out.'); renderScore(); maybeAdvance(); });
 $('#btnPower').addEventListener('click', togglePower);
 $('#btnTape').addEventListener('click', applyTape);
 $('#loads').addEventListener('click', e => { const b = e.target.closest('button[data-load]'); if (b) setLoad(+b.dataset.load); });
@@ -1522,7 +1623,8 @@ $('#quiz').addEventListener('click', e => { const b = e.target.closest('button[d
 $('#btnStep').addEventListener('click', () => go(gi + 1));
 $('#btnBack').addEventListener('click', () => { go(gi - 1); if (gi) $('#narration').textContent = 'Stepped back. ' + GUIDE[gi - 1].text(); });
 $('#btnReset').addEventListener('click', () => go(0));
-$('#btnShow').addEventListener('click', () => { const sec = $(gi ? GUIDE[gi - 1].sec : '#secSafety'); if (!sec) return; sec.scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); const f = sec.querySelector('input,button:not([disabled])'); if (f) f.focus({preventScroll: true}); });
+const NOW_SEC = ['#secSafety', '#secSafety', '#secBench', '#secBench', '#secBench', '#secTable', '#secQuiz', '#scoreCard'];
+$('#btnShow').addEventListener('click', () => { const sec = $(gi ? GUIDE[gi - 1].sec : NOW_SEC[progress()[0]]); if (!sec) return; sec.scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); const f = sec.querySelector('input,button:not([disabled])'); if (f) f.focus({preventScroll: true}); });
 document.querySelectorAll('.views button[data-view]').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.views button[data-view]').forEach(x => x.classList.toggle('on', x === b)); G.view(b.dataset.view); }));
 $('#follow').addEventListener('click', () => { follow = !follow; $('#follow').classList.toggle('on', follow); $('#follow').setAttribute('aria-pressed', follow); });
 document.addEventListener('keydown', e => { const t = e.target && e.target.tagName;

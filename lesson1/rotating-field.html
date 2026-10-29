@@ -234,6 +234,33 @@
     .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---- stacked layout (v2, October 29 2026): the board uses the full width of the page, instructions and controls go below it ---- */
+  .app{display:block;height:auto;min-height:0}
+  .app>.lab-head{max-width:1240px;margin:0 auto;padding:18px 16px 14px}
+  .app>.lab-head h1{font-size:clamp(24px,3vw,32px);margin:4px 0 6px}
+  .app>.stage{width:100%;height:clamp(420px,70vh,860px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .panel{max-width:1240px;margin:0 auto;border-left:0;overflow:visible;background:none;display:block;columns:2 420px;column-gap:28px;padding:20px 16px 28px}
+  .panel>*{break-inside:avoid;margin:0 0 22px}
+  .panel>header,.panel>footer,.panel>.guide,.panel>.span-all{column-span:all}
+  /* how to use: numbered steps with the current one highlighted, plus a "do this now" line */
+  .guide{max-width:1240px;margin:0 auto;padding:18px 16px 4px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px 26px;align-items:start}
+  .guide h2{grid-column:1/-1;margin:0;font-size:18px}
+  .guide ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:s}
+  .guide ol.steps li{counter-increment:s;position:relative;padding:8px 10px 8px 44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--silk);font-size:15px;line-height:1.45}
+  .guide ol.steps li::before{content:counter(s);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--font-mono);background:var(--line);color:var(--silk)}
+  .guide ol.steps li.current{border-color:var(--cbt-gold);background:var(--panel-2)}
+  .guide ol.steps li.current::before{background:var(--cbt-gold);color:var(--cbt-navy)}
+  .guide ol.steps li.done{color:var(--silk-dim)}
+  .guide ol.steps li.done::before{content:"\2713";background:var(--ok);color:#06120f}
+  .guide ol.steps li b,.guide .now b{color:var(--cbt-gold);font-weight:600}
+  .guide .now{border-left:4px solid var(--cbt-sky);background:var(--panel-2);border-radius:6px;padding:14px 16px;font-size:16px;line-height:1.5;color:var(--silk)}
+  .guide .now .k{display:block;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);margin-bottom:4px}
+  .guide .tips{margin:10px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--silk-dim);display:grid;gap:4px}
+  @media(max-width:860px){.guide{grid-template-columns:1fr}.panel{columns:1}}
+  /* page mode: board card on top across the full width, the round or task below */
+  .card .stage.wide{aspect-ratio:21/9;min-height:360px}
+  @media(max-width:860px){.card .stage.wide{aspect-ratio:4/3;min-height:0}}
   /* ===== end of theme ===== */
 
   /* page-specific CSS below (app mode explorer). Keep the middle right of the stage free for the zoom buttons. */
@@ -263,6 +290,8 @@
   .reg .bar{grid-column:1/-1;height:6px;border-radius:3px;background:#1a2350;margin-top:6px;overflow:hidden}
   .reg .bar i{display:block;height:100%;width:0;background:var(--c,var(--out));border-radius:3px;box-shadow:0 0 6px var(--c,var(--out))}
   .reg .rv small{font-size:11px;color:var(--silk-dim);font-weight:500}
+  .charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 26px}
+  .charts figure{margin:0;min-width:0}
   .chart{width:100%;height:auto;display:block;background:var(--code-bg);border:1px solid var(--line);border-radius:5px}
   .chart .gl{stroke:#232c63;stroke-width:1}
   .chart .ax{stroke:#4a5490}
@@ -286,8 +315,9 @@
   .ckey i.pt{width:9px;height:9px;border-radius:50%}
   .tw{overflow-x:auto;border:1px solid var(--line);border-radius:5px}
   .mx th{white-space:nowrap}
-  .mx td{vertical-align:top;font:400 11.5px/1.35 var(--font-body);color:var(--silk-dim);padding:6px 7px;transition:background .3s,color .3s}
-  .mx td:first-child{font:600 11px/1.3 var(--font-mono);color:var(--silk)}
+  .mx{width:100%}
+  .mx td{vertical-align:top;font:400 13.5px/1.4 var(--font-body);color:var(--silk-dim);padding:8px 10px;transition:background .3s,color .3s}
+  .mx td:first-child{font:600 12px/1.3 var(--font-mono);color:var(--silk);white-space:nowrap}
   .mx th.on{background:var(--cbt-gold);color:#1a1205}
   .mx td.on{background:rgba(224,184,64,.13);color:var(--silk)}
   .mxnow{font-size:12.5px;color:var(--silk-dim);margin:8px 0 0}
@@ -311,7 +341,11 @@
   .flat .sub2{font-size:9px;fill:#aeb3c9}
   .app .stage.flat-portrait{height:790px;max-height:none}
   .stage.flat-portrait .flat{top:172px!important;height:calc(100% - 250px)!important}
+  @media(min-width:1000px){.app>.stage{--lab:13.5px!important}}
+  @media(max-width:860px){.charts{grid-template-columns:1fr}}
   @media(max-width:520px){
+    .mx td{font-size:11.5px;padding:6px 7px}
+    .mx td:first-child{white-space:normal}
     .stage .zone,.stage .tag .sb{display:none}
     .hud .legend{max-width:100%}
     .rel{grid-template-columns:76px minmax(0,1fr);gap:10px}
@@ -329,6 +363,11 @@
 </header>
 
 <div class="app">
+  <header class="lab-head">
+    <p class="eyebrow">LSN-MOTORS · Lesson 1 · Explorer</p>
+    <h1>Rotating field lab</h1>
+    <p class="lede">Run a three-phase motor from standstill to full speed and watch slip, rotor voltage, rotor frequency, current, power factor, and torque change. The motor is like the CV-2 conveyor motor at Biscayne Cold Storage in Medley (4 poles, 1725 RPM nameplate). Slip is how far the rotor falls behind the rotating magnetic field.</p>
+  </header>
   <section class="stage" id="stage" aria-label="3D view of a three-phase induction motor, end view from above: stator coils, rotating field arrow, and squirrel-cage rotor. Drag to orbit, use the zoom buttons or scroll to zoom, click a part to learn what it does.">
     <div class="hud hud-top">
       <ol class="phases" aria-label="Phase">
@@ -360,16 +399,64 @@
     <div class="nogl" id="nogl" hidden>The 3D view needs WebGL and the 3D libraries, which are not available here. The flat end view shows the same steps.</div>
   </section>
 
+  <section class="guide" aria-labelledby="guideTitle">
+    <h2 id="guideTitle">How to use this lab</h2>
+    <ol class="steps" id="howSteps">
+      <li data-h="1">Press <b>Step</b> to see the motor at standstill. Read the narration in the box below the board. It explains each state with real numbers.</li>
+      <li data-h="2">Press <b>Step</b> again for <b>Accelerating</b> and then <b>Pull-out</b>. On the board above, watch the rotor's purple mark catch up with the green field arrows. On the torque chart below, the green dot climbs to the top of the curve.</li>
+      <li data-h="3">Press <b>Step</b> for <b>Full speed</b> and then <b>Reverse</b>. In the <b>Three-state matrix</b> below, the gold column is the state the motor is in now. You are done with the narrated run when step 5 of 5 shows.</li>
+      <li data-h="4">Now run the motor yourself. Press <b>Start motor</b> and watch it speed up until it settles. Then pick a new <b>Load on the shaft</b>. Watch the speed, slip, and torque change in <b>Live readings</b>. You can also drag the <b>Rotor speed</b> slider to hold the rotor at any speed.</li>
+      <li data-h="5">Change <b>Poles (P)</b> or <b>Supply frequency (f)</b> to get a new synchronous speed (Ns). Press <b>Swap two leads</b> to reverse the field and the motor.</li>
+      <li data-h="6">Click any part on the board above, or a button under <b>Parts of the motor</b>, to learn what it does. Press <b>Reset</b> to start over.</li>
+    </ol>
+    <div>
+      <div class="now" aria-live="polite"><span class="k">Do this now</span><span id="nowText">Press <b>Step</b> to see the motor at standstill.</span></div>
+      <ul class="tips">
+        <li>Drag on the board to turn it. Use <b>+</b> and <b>&minus;</b> to zoom, the arrows to move the view, and <b>FIT</b> to see the whole board.</li>
+        <li><b>Overview</b>, <b>Motor</b>, and <b>Top</b> (bottom right of the board) change the camera. <b>Follow</b> moves the camera to each part as the steps play.</li>
+        <li>Keyboard: Space steps, B steps back, R runs or pauses, + and &minus; zoom.</li>
+        <li>Changing a setting starts the narrated steps over, but the motor keeps its speed.</li>
+      </ul>
+    </div>
+  </section>
+
   <aside class="panel">
-    <header>
-      <p class="eyebrow">LSN-MOTORS · Lesson 1 · Explorer</p>
-      <h1>Rotating field lab</h1>
-      <p class="lede">Run a three-phase motor from standstill to full speed and watch slip, rotor voltage, rotor frequency, current, power factor, and torque change. The motor is like the CV-2 conveyor motor at Biscayne Cold Storage in Medley (4 poles, 1725 RPM nameplate).</p>
-    </header>
+    <section class="narr" aria-live="polite">
+      <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 5</span></div>
+      <p id="narration">Press Step to start, or Run to play every step.</p>
+    </section>
+    <div>
+      <div class="controls">
+        <button type="button" class="btn primary" id="btnRun">Run</button>
+        <button type="button" class="btn" id="btnStep">Step</button>
+        <button type="button" class="btn" id="btnBack">Step back</button>
+        <button type="button" class="btn" id="btnReset">Reset</button>
+      </div>
+      <div class="speed" style="margin-top:12px"><label for="speed">Speed</label><input type="range" id="speed" min="0" max="4" step="1" value="2"><output id="speedOut">1×</output></div>
+    </div>
 
     <section aria-labelledby="hSetup">
-      <h2 id="hSetup">Set up the motor</h2>
+      <h2 id="hSetup">Run the motor yourself</h2>
       <div class="setup">
+        <div class="fld full act">
+          <button type="button" class="btn" id="btnStart">Start motor</button>
+          <button type="button" class="btn" id="btnSwap">Swap two leads</button>
+          <button type="button" class="btn" id="btnSpin" aria-pressed="false">Pause spin</button>
+        </div>
+        <div class="fld full"><label for="selLoad">Load on the shaft</label>
+          <select id="selLoad">
+            <option value="0">No load (friction only)</option>
+            <option value="25">25% of rated load</option>
+            <option value="50">50% of rated load</option>
+            <option value="75">75% of rated load</option>
+            <option value="100" selected>100% of rated load</option>
+            <option value="125">125% of rated load</option>
+          </select>
+        </div>
+        <div class="fld full"><label for="spd">Rotor speed (drag to hold the rotor at one speed, like a test brake)</label>
+          <div class="slider"><input type="range" id="spd" min="0" max="1800" step="1" value="0"><output id="spdOut" for="spd">0 RPM</output></div>
+          <p class="note" id="spdNote"></p>
+        </div>
         <div class="fld"><label for="selPoles">Poles (P)</label>
           <select id="selPoles">
             <option value="2">2 poles</option>
@@ -385,42 +472,8 @@
           </select>
         </div>
         <div class="fld full"><div class="formula" id="nsFormula"></div></div>
-        <div class="fld full"><label for="selLoad">Load on the shaft</label>
-          <select id="selLoad">
-            <option value="0">No load (friction only)</option>
-            <option value="25">25% of rated load</option>
-            <option value="50">50% of rated load</option>
-            <option value="75">75% of rated load</option>
-            <option value="100" selected>100% of rated load</option>
-            <option value="125">125% of rated load</option>
-          </select>
-        </div>
-        <div class="fld full"><label for="spd">Rotor speed in the field's direction (drag to hold the rotor at a speed)</label>
-          <div class="slider"><input type="range" id="spd" min="0" max="1800" step="1" value="0"><output id="spdOut" for="spd">0 RPM</output></div>
-          <p class="note" id="spdNote"></p>
-        </div>
-        <div class="fld full act">
-          <button type="button" class="btn" id="btnStart">Start motor</button>
-          <button type="button" class="btn" id="btnSwap">Swap two leads</button>
-          <button type="button" class="btn" id="btnSpin" aria-pressed="false">Pause spin</button>
-        </div>
       </div>
     </section>
-
-    <section class="narr" aria-live="polite">
-      <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 5</span></div>
-      <p id="narration">Press Step to start, or Run to play every step.</p>
-    </section>
-    <div>
-      <div class="controls">
-        <button type="button" class="btn primary" id="btnRun">Run</button>
-        <button type="button" class="btn" id="btnStep">Step</button>
-        <button type="button" class="btn" id="btnBack">Step back</button>
-        <button type="button" class="btn" id="btnReset">Reset</button>
-      </div>
-      <div class="speed" style="margin-top:12px"><label for="speed">Speed</label><input type="range" id="speed" min="0" max="4" step="1" value="2"><output id="speedOut">1×</output></div>
-      <p class="hint" style="margin-top:8px">Keyboard: Space steps, B steps back, R runs or pauses, + and - zoom. Changing a setting starts the narrated steps over.</p>
-    </div>
 
     <section aria-labelledby="hLive">
       <div class="sec-head"><h2 id="hLive">Live readings</h2><span class="statep" id="statePill">Standstill</span></div>
@@ -444,18 +497,27 @@
         <div class="reg kv" style="--c:var(--alu)"><span class="rn">PF</span><span class="rv" id="vPf">0.20</span><span class="rf">rotor power factor</span><span class="rs" id="sPf"></span><div class="bar"><i id="bPf"></i></div></div>
         <div class="reg kv wide" style="--c:var(--cbt-gold)"><span class="rn">Torque</span><span class="rv" id="vT">0.96</span><span class="rf">motor torque, × rated (rated = 1.00)</span><span class="rs" id="sT"></span><div class="bar"><i id="bT"></i></div></div>
       </div>
+      <p class="note">Per unit means compared with a reference value of 1. FLA is the full-load amps on the nameplate.</p>
     </section>
 
-    <section aria-labelledby="hCharts">
+    <section class="span-all" aria-labelledby="hCharts">
       <div class="sec-head"><h2 id="hCharts">Torque and current against speed</h2><small id="chartTag"></small></div>
-      <svg class="chart" id="chartT" viewBox="0 0 340 150" role="img" aria-label="Torque against rotor speed, with the load and the operating point"></svg>
-      <div class="ckey"><span style="--c:var(--cbt-gold)"><i></i>motor torque</span><span style="--c:var(--cbt-sky)"><i class="dash"></i>load (grows with speed)</span><span style="--c:var(--cbt-sky)"><i class="pt"></i>pull-out</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></div>
-      <svg class="chart" id="chartI" viewBox="0 0 340 150" role="img" aria-label="Line current against rotor speed, with the operating point"></svg>
-      <div class="ckey"><span style="--c:var(--ctrl)"><i></i>line current</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></div>
+      <p class="note" style="margin:0 0 10px">The green dot is the operating point: where the motor is right now. It moves as the rotor speeds up.</p>
+      <div class="charts">
+        <figure>
+          <svg class="chart" id="chartT" viewBox="0 0 380 160" role="img" aria-label="Torque against rotor speed, with the load and the operating point"></svg>
+          <figcaption class="ckey"><span style="--c:var(--cbt-gold)"><i></i>motor torque</span><span style="--c:var(--cbt-sky)"><i class="dash"></i>load (grows with speed)</span><span style="--c:var(--cbt-sky)"><i class="pt"></i>pull-out (maximum torque)</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></figcaption>
+        </figure>
+        <figure>
+          <svg class="chart" id="chartI" viewBox="0 0 380 160" role="img" aria-label="Line current against rotor speed, with the operating point"></svg>
+          <figcaption class="ckey"><span style="--c:var(--ctrl)"><i></i>line current</span><span style="--c:var(--silk-dim)"><i class="dash"></i>full-load amps (FLA)</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></figcaption>
+        </figure>
+      </div>
     </section>
 
-    <section aria-labelledby="hMx">
+    <section class="span-all" aria-labelledby="hMx">
       <h2 id="hMx">Three-state matrix</h2>
+      <p class="note" style="margin:0 0 10px">Each row is one rotor quantity. The gold column is the state the motor is in now.</p>
       <div class="tw"><table class="mx"><thead><tr><th scope="col">Quantity</th><th scope="col" data-c="standstill">Standstill</th><th scope="col" data-c="accel">Accelerating</th><th scope="col" data-c="full">Full speed</th></tr></thead><tbody id="mxBody"></tbody></table></div>
       <p class="mxnow" id="mxNow"></p>
     </section>
@@ -464,15 +526,6 @@
       <h2 id="hParts">Parts of the motor</h2>
       <div class="parts" id="parts" role="group" aria-label="Learn a part"></div>
       <div class="info" id="info" aria-live="polite">Click any part on the board, or a button above, to learn what it does.</div>
-    </section>
-
-    <section aria-labelledby="hModel">
-      <h2 id="hModel">About these numbers</h2>
-      <div class="model">
-        <p>The numbers come from a <b>simplified teaching model</b>, the same one every activity in this lesson uses. Per-unit rotor values are R2 = 0.04 and X20 = 0.20 at E20 = 1 with constant flux, plus a magnetizing current of 0.4 × FLA. The model leaves out the stator resistance and other losses, and it gives every motor a rated slip of 4.17% (real nameplates vary: the F-3 fan slips 5.0%).</p>
-        <p><b>Real motors draw roughly 5 to 7 times full-load current at start.</b> This model shows about 4.4 times, so read its starting current as "several times FLA", not as an exact value.</p>
-        <p>The load in this lab grows with speed, like a fan or a compressor, so it reaches the chosen value at full speed. The picture turns 100 times slower than the real motor so you can follow it.</p>
-      </div>
     </section>
 
     <section>
@@ -486,6 +539,15 @@
         <li>Swapping any two leads reverses the field, and the rotor follows it the other way.</li>
       </ul>
     </section>
+
+    <section aria-labelledby="hModel">
+      <h2 id="hModel">About these numbers</h2>
+      <div class="model">
+        <p>The numbers come from a <b>simplified teaching model</b>, the same one every activity in this lesson uses. Per-unit rotor values are R2 = 0.04 and X20 = 0.20 at E20 = 1 with constant flux, plus a magnetizing current of 0.4 × FLA. The model leaves out the stator resistance and other losses, and it gives every motor a rated slip of 4.17% (real nameplates vary: the F-3 fan slips 5.0%).</p>
+        <p><b>Real motors draw roughly 5 to 7 times full-load current at start.</b> This model shows about 4.4 times, so read its starting current as "several times FLA", not as an exact value.</p>
+        <p>The load in this lab grows with speed, like a fan or a compressor, so it reaches the chosen value at full speed. The picture turns 100 times slower than the real motor so you can follow it.</p>
+      </div>
+    </section>
     <footer style="font-size:12px;color:var(--silk-dim);border-top:1px solid var(--line);padding-top:12px">CBT Technology Institute · Flagler Campus · LSN-MOTORS Three-phase induction motor behavior<div class="byline">By Professor De Leon</div></footer>
   </aside>
 </div>
@@ -494,6 +556,13 @@
 (function () {
 "use strict";
 const hasGSAP = typeof window.gsap !== 'undefined';
+// guide block: mark the current step (1-based) and say the single next action
+let guideNo = 1;
+function guide(stepNo, nowHtml) {
+  guideNo = stepNo;
+  document.querySelectorAll('#howSteps li').forEach(li => { const n = +li.dataset.h; li.classList.toggle('done', n < stepNo); li.classList.toggle('current', n === stepNo); });
+  if (nowHtml) document.getElementById('nowText').innerHTML = nowHtml;
+}
 const $ = s => document.querySelector(s);
 // LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
 // Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
@@ -721,11 +790,15 @@ function Lab3D(stage, opts) {
     if (name === 'overview' || !views[name]) {
       // the overview (and FIT) must show the whole board width, also on narrow phone screens,
       // leaving room for the zoom buttons at the right edge
-      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      // and, on wide stages, fill the stage: the board fits both the width and the height of the view, no more, no less
+      const tanV = Math.tan(T.MathUtils.degToRad(camera.fov / 2)), tanH = tanV * camera.aspect;
+      const dist0 = pos.distanceTo(tgt), sinE = Math.max(0.3, (pos.y - tgt.y) / dist0);
       const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
-      f = Math.max(f, need / pos.distanceTo(tgt));
-      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
-      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+      const needD = (B.d / 2 * sinE + 0.8) / (tanV * 0.78) + B.d * 0.25;   // 0.78 leaves room for the HUD bars at the top and bottom
+      f = Math.max(need, needD) / dist0;
+      const need2 = Math.max(need, needD);
+      controls.maxDistance = Math.max(controls.maxDistance, need2 * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need2 * 1.1); scene.fog.far = Math.max(scene.fog.far, need2 * 2.6); }
     }
     pos.sub(tgt).multiplyScalar(f).add(tgt);
     return {pos: pos, tgt: tgt};
@@ -904,7 +977,7 @@ function layoutOf(portrait) {
   if (!portrait) {
     const mc = {x: 0.6, z: 0}, zl = [1.3, 1.7, 2.1], px = [-6.2, -5.5, -4.8];
     const xe = z => mc.x - Math.sqrt(R * R - (z - mc.z) * (z - mc.z)) + 0.03;
-    return {bw: 15, bd: 9.4, mc: mc,
+    return {bw: 15, bd: 8.4, mc: mc,
       ch: {supply: {x: -5.5, z: -2.5, w: 2.4, d: 1.5, nm: 'SUPPLY'}, leads: {x: -5.5, z: 1.7, w: 2.4, d: 1.4, nm: 'LEADS'},
         tach: {x: 5.9, z: -2.9, w: 2.0, d: 1.3, nm: 'TACH'}, slip: {x: 5.9, z: 0, w: 2.0, d: 1.3, nm: 'SLIP'}, fr: {x: 5.9, z: 2.9, w: 2.0, d: 1.3, nm: 'ROTOR fr'}},
       lines(dir) {
@@ -916,7 +989,7 @@ function layoutOf(portrait) {
           return {ph: ph, up: up, dn: dn};
         });
       },
-      sensor: [{x: 5.9, z: -2.25}, {x: 5.9, z: 2.25}], zone: {x: 0.6, z: 3.85}};
+      sensor: [{x: 5.9, z: -2.25}, {x: 5.9, z: 2.25}], zone: {x: 0.9, z: 3.86}};
   }
   const mc = {x: 0, z: -2.6}, xl = [-3.1, -2.7, -2.3], px = [-3.4, -2.7, -2.0];
   const ze = x => mc.z + Math.sqrt(R * R - (x - mc.x) * (x - mc.x)) - 0.03;
@@ -952,10 +1025,10 @@ const INFO = {
 const PART_ORDER = [['coils', 'Stator coils'], ['stator', 'Stator core'], ['field', 'Field'], ['rotor', 'Rotor core'], ['bars', 'Rotor bars'], ['rings', 'End rings'], ['shaft', 'Shaft'], ['supply', 'Supply'], ['leads', 'Leads']];
 
 function Graphics3D(stage) {
-  const narrow = stage.clientWidth < 600;
-  const lab = Lab3D(stage, {board: {w: 15, d: 9.4, cz: 0, silk: 'CBT TECHNOLOGY INSTITUTE  LSN-MOTORS  BISCAYNE COLD STORAGE  MEDLEY FL', seed: 23},
-    views: {overview: {pos: narrow ? [0, 19, 7] : [0, 12.5, 10.5], tgt: [0, 0, 0.2], want: 1.5},
-      motor: {pos: [1.2, 8.2, 6.6], tgt: [0.6, 0.5, 0], want: 1.1},
+  const narrow = stage.clientWidth < 600, Lb = layoutOf(false);
+  const lab = Lab3D(stage, {board: {w: Lb.bw, d: Lb.bd, cz: 0, silk: 'CBT TECHNOLOGY INSTITUTE  LSN-MOTORS', seed: 23},
+    views: {overview: {pos: narrow ? [2.4, 19, 7] : [0, 11, 11.5], tgt: narrow ? [2.4, 0, 0.2] : [0, 0, 0.2], want: 1.5},
+      motor: {pos: [1.0, 9.0, 7.4], tgt: [0.6, 0.3, 0.25], want: 1.1},
       top: {pos: [0.6, 13.5, 0.8], tgt: [0.6, 0, 0], want: 1.0}}});
   if (!lab) return null;
   const T = lab.T, C = h => new T.Color(h).convertSRGBToLinear(), scene = lab.scene, Lo = layoutOf(false), mc = Lo.mc, R = lab.recs, unit = lab.unit;
@@ -1254,7 +1327,7 @@ function dirText(S, M) {
 }
 
 // ---- charts: torque and line current against rotor speed (inline SVG) ----
-const CW = 340, CHH = 150, PL = 38, PR = 12, PT = 12, PB = 30;
+const CW = 380, CHH = 160, PL = 38, PR = 12, PT = 12, PB = 30;
 const cxp = (u, ns) => PL + Math.max(0, Math.min(1, u / ns)) * (CW - PL - PR);
 const cyp = (v, vmax) => PT + (1 - Math.max(0, Math.min(v, vmax)) / vmax) * (CHH - PT - PB);
 function drawChart(kind) {
@@ -1274,7 +1347,7 @@ function drawChart(kind) {
     for (let i = 0; i <= 60; i++) { const u = ns * i / 60; dl += (i ? 'L' : 'M') + cxp(u, ns).toFixed(1) + ' ' + cyp(loadAt(u, L, nop), vmax).toFixed(1); }
     h += '<path d="' + dl + '" class="ld"/>';
     const po = ns * (1 - pullOutSlip()), Tm = torque(pullOutSlip());
-    h += '<circle cx="' + cxp(po, ns).toFixed(1) + '" cy="' + cyp(Tm, vmax).toFixed(1) + '" r="3.5" class="po"/><text x="' + (cxp(po, ns) - 6).toFixed(1) + '" y="' + (cyp(Tm, vmax) + 15).toFixed(1) + '" text-anchor="end" class="pot">pull-out ' + f2(Tm) + '×</text>';
+    h += '<circle cx="' + cxp(po, ns).toFixed(1) + '" cy="' + cyp(Tm, vmax).toFixed(1) + '" r="3.5" class="po"/><text x="' + cxp(po, ns).toFixed(1) + '" y="' + (cyp(Tm, vmax) - 7).toFixed(1) + '" text-anchor="middle" class="pot">pull-out ' + f2(Tm) + '×</text>';
   } else {
     h += '<line x1="' + PL + '" x2="' + (CW - PR) + '" y1="' + cyp(1, vmax).toFixed(1) + '" y2="' + cyp(1, vmax).toFixed(1) + '" class="fla"/><text x="' + (PL + 4) + '" y="' + (cyp(1, vmax) - 4).toFixed(1) + '" class="tk">FLA = 2.4 A on CV-2</text>';
   }
@@ -1405,25 +1478,37 @@ function buildDial() {
   d.innerHTML = h; dialArrows = $('#dialArr');
 }
 
-function render() { $('#hudStep').textContent = S.step; $('#ctx').textContent = 'Step ' + S.step + ' of ' + STEPS.length; $('#btnBack').disabled = !hist.length; $('#btnStep').disabled = S.step >= STEPS.length; $('#btnRun').textContent = running ? 'Pause' : 'Run'; refreshSupply(); live(); }
+function render() { $('#hudStep').textContent = S.step; $('#ctx').textContent = 'Step ' + S.step + ' of ' + STEPS.length; $('#btnBack').disabled = !hist.length; $('#btnStep').disabled = S.step >= STEPS.length; $('#btnRun').textContent = running ? 'Pause' : 'Run'; refreshSupply(); live(); if (!manualMode) guideSteps(); }
+// the guide during the narrated run: steps 1 to 5 map to guide items 1 (standstill), 2 (accelerating, pull-out), 3 (full speed, reverse), then 4 (run it yourself)
+const PHASE_NAME = {stand: 'Standstill', accel: 'Accelerating', pull: 'Pull-out', full: 'Full speed', rev: 'Reverse'};
+const guideOf = n => n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4;
+let manualMode = false;
+function guideSteps() {
+  const n = S.step + 1;
+  if (S.step >= STEPS.length) guide(4, 'The narrated run is done. Press <b>Start motor</b> to watch the motor speed up by itself.');
+  else if (running) guide(guideOf(n), 'Watch the board above and read the narration below it. Press <b>Pause</b> to stop at any step.');
+  else if (S.step === 0) guide(1, 'Press <b>Step</b> to see the motor at standstill. Or press <b>Run</b> to play all 5 steps.');
+  else guide(guideOf(n), 'Read the narration below the board. Then press <b>Step</b> for step ' + n + ' of 5: <b>' + PHASE_NAME[STEPS[S.step].phase] + '</b>.');
+}
 function refreshSupply() { if (S.poles !== curPoles || S.f + '|' + S.load !== refreshSupply.k) { curPoles = S.poles; refreshSupply.k = S.f + '|' + S.load; setupText(); drawChart('t'); drawChart('i'); buildDial(); buildMatrix(); } }
 function finish(m) { tl = null; m.commit(S); S.step++; render(); if (running) { if (S.step >= STEPS.length) stop(); else timer = setTimeout(stepFwd, 350 / speed); } }
 function stepFwd(animated) {
   if (tl) { tl.progress(1); return; }
   if (S.step >= STEPS.length) return;
-  simActive = false;
+  simActive = false; manualMode = false;
   hist.push({poles: S.poles, f: S.f, load: S.load, u: S.u, dir: S.dir, phase: S.phase, step: S.step});   // data only (GSAP adds a cache to S)
   const m = STEPS[S.step]; S.phase = m.phase; setPhase(m.phase); $('#narration').textContent = m.text(S);
+  guide(guideOf(S.step + 1), 'Step ' + (S.step + 1) + ' of 5, <b>' + PHASE_NAME[m.phase] + '</b>, is playing. Watch the board above.' + (running ? ' Press <b>Pause</b> to stop.' : ''));
   if (animated !== false && hasGSAP && G) { if (follow && FOCUS[m.phase]) G.focus(FOCUS[m.phase][0], FOCUS[m.phase][1]); tl = gsap.timeline({onComplete: () => finish(m)}); m.anim(tl, S); tl.timeScale(speed); }
   else finish(m);
 }
-function back() { stop(); if (tl) { tl.kill(); tl = null; } if (!hist.length) return; simActive = false; S = hist.pop(); G && (G.clearPackets(), G.clear()); setPhase(S.phase); $('#narration').textContent = 'Stepped back. Press Step to watch that step again.'; render(); }
-function run() { if (S.step >= STEPS.length) return; running = true; render(); stepFwd(); }
+function back() { manualMode = false; stop(); if (tl) { tl.kill(); tl = null; } if (!hist.length) return; simActive = false; S = hist.pop(); G && (G.clearPackets(), G.clear()); setPhase(S.phase); $('#narration').textContent = 'Stepped back. Press Step to watch that step again.'; render(); }
+function run() { if (S.step >= STEPS.length) return; running = true; manualMode = false; render(); stepFwd(); }
 function stop() { running = false; clearTimeout(timer); render(); }
-function reset() { stop(); if (tl) { tl.kill(); tl = null; } simActive = false; S = fresh(); hist = []; G && (G.clearPackets(), G.clear()); setPhase(null); $('#narration').textContent = READY; render(); }
+function reset() { manualMode = false; stop(); if (tl) { tl.kill(); tl = null; } simActive = false; S = fresh(); hist = []; G && (G.clearPackets(), G.clear()); setPhase(null); $('#narration').textContent = READY; render(); }
 // a manual change (setting, slider, start, swap) starts the narrated steps over but keeps the motor where it is
-function manual() { running = false; clearTimeout(timer); if (tl) { tl.kill(); tl = null; } hist = []; S.step = 0; S.phase = null; setPhase(null); G && (G.clearPackets(), G.clear()); }
-const READY = 'The rotor is held still while the field turns: standstill. Press Step or Run for the narrated run, Start motor to watch it speed up by itself, or drag the rotor speed slider.';
+function manual() { manualMode = true; running = false; clearTimeout(timer); if (tl) { tl.kill(); tl = null; } hist = []; S.step = 0; S.phase = null; setPhase(null); G && (G.clearPackets(), G.clear()); }
+const READY = 'Standstill: the rotor is held still while the field turns. Press Step to begin the narrated run, or Run to play all 5 steps.';
 
 // ---- the motor speeding up by itself: d(speed)/dt grows with (motor torque - load torque) ----
 function simStep(dt) {
@@ -1436,6 +1521,9 @@ function simDone() {
   const M = readings(S), n = Math.round(M.u);
   $('#narration').textContent = (simKind === 'swap' ? 'Reversed. ' : simKind === 'load' ? 'New load. ' : '') + 'The motor settled at ' + n + ' RPM ' + loadWords(S.load) + '. Motor torque ' + f2(M.t) + ' × rated matches the load, slip is ' + M.s.toFixed(4) + ' (' + (M.s * 100).toFixed(2) + '%), and the rotor frequency is ' + fmtHz(M.fr) + ' Hz. The line current is ' + M.iRatio.toFixed(1) + ' × FLA.';
   render();
+  if (simKind === 'swap') guide(6, 'The motor settled at ' + n + ' RPM in reverse. Click any part on the board above to learn what it does.');
+  else if (simKind === 'load') guide(5, 'The motor settled at ' + n + ' RPM. Now change <b>Poles (P)</b> to get a new synchronous speed.');
+  else guide(4, 'The motor settled at ' + n + ' RPM. Now pick a new <b>Load on the shaft</b> and watch the speed change.');
 }
 let last = performance.now();
 function tick(now) {
@@ -1457,6 +1545,10 @@ function showPart(k) {
   $('#info').innerHTML = INFO[k](S);
   partsBox.querySelectorAll('.btn').forEach(b => b.classList.toggle('on', b.dataset.k === k));
   if (!tl) { G.clear(); G.hi(k, COL.A); }
+  const nm = Object.assign({tach: 'Tachometer', slip: 'Slip readout', fr: 'Rotor frequency readout'}, Object.fromEntries(PART_ORDER))[k] || k;
+  const where = 'Read about the <b>' + nm.toLowerCase() + '</b> under <b>Parts of the motor</b> below. ';
+  if (!manualMode && S.step < STEPS.length) guide(guideNo, where + 'Then press <b>Step</b> to continue the run.');
+  else guide(6, where + 'Click another part, or press <b>Reset</b> to start over.');
 }
 G.onPick = showPart;
 partsBox.addEventListener('click', e => { const b = e.target.closest('.btn'); if (b) showPart(b.dataset.k); });
@@ -1470,26 +1562,32 @@ function onSupply() {
   S.poles = +$('#selPoles').value; S.f = +$('#selFreq').value;
   const ns = nsOf(S); S.u = Math.round(ns * (1 - s0));
   render();
+  guide(5, 'The field now turns at ' + ns + ' RPM. Press <b>Swap two leads</b> to reverse the motor.');
   const M = cur;
   $('#narration').textContent = 'Ns = 120 × ' + S.f + ' / ' + S.poles + ' = ' + ns + ' RPM, so the field arrow now turns at ' + ns + ' RPM. The slip stays ' + M.s.toFixed(4) + ', so the rotor turns at ' + Math.round(M.u) + ' RPM and the rotor frequency is ' + fmtHz(M.fr) + ' Hz.' + (S.poles > 2 ? ' More poles means a slower field: each turn of the field takes ' + (S.poles / 2) + ' cycles of the supply.' : ' Two poles is the fastest an induction motor can be built for a given frequency.');
 }
 $('#selLoad').addEventListener('change', () => {
   manual(); S.load = +$('#selLoad').value; render();
   const n = nopOf(S), sl = slipOf(nsOf(S), n);
-  if (S.u > 0 && cur.state !== 'standstill') { simActive = true; simKind = 'load'; $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. The motor changes speed until its torque matches the load again, at ' + n + ' RPM (slip ' + sl.toFixed(4) + ').'; }
-  else $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. Press Start motor or step through the run: at full speed the rotor settles at ' + n + ' RPM, slip ' + sl.toFixed(4) + '.';
+  if (S.u > 0 && cur.state !== 'standstill') { simActive = true; simKind = 'load'; guide(4, 'Watch the speed change on the <b>TACH</b> chip on the board above. Wait for the motor to settle.'); $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. The motor changes speed until its torque matches the load again, at ' + n + ' RPM (slip ' + sl.toFixed(4) + ').'; }
+  else { guide(4, 'Press <b>Start motor</b> to see where the motor settles with this load.'); $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. Press Start motor to watch the rotor speed up. At full speed it settles at ' + n + ' RPM, slip ' + sl.toFixed(4) + '.'; }
 });
 $('#spd').addEventListener('input', e => {
   if (simActive || S.step || tl) manual();
   simActive = false; S.u = +e.target.value; live();
+  const po = Math.round(nsOf(S) * (1 - pullOutSlip()));
+  if (Math.abs(S.u - po) <= 12) guide(5, 'You found pull-out: the torque is at its maximum, ' + f2(torque(pullOutSlip())) + ' × rated. Now change <b>Poles (P)</b> to get a new synchronous speed.');
+  else guide(4, 'Drag the <b>Rotor speed</b> slider to ' + po + ' RPM. That is pull-out, where the torque is highest.');
   $('#narration').textContent = 'You are holding the rotor at ' + Math.round(S.u) + ' RPM with a test brake. Slip is ' + cur.s.toFixed(4) + ', the rotor frequency is ' + fmtHz(cur.fr) + ' Hz, and the motor makes ' + f2(cur.t) + ' × rated torque with a power factor of ' + f2(cur.pf) + '.';
 });
 $('#btnStart').addEventListener('click', () => {
   manual(); S.u = 0; simActive = true; simKind = 'start'; render();
+  guide(4, 'Watch the board above and the green dot on the torque chart below. Wait for the motor to settle.');
   $('#narration').textContent = 'Starting across the line ' + loadWords(S.load) + '. Watch the operating point climb the torque curve and the matrix move from standstill to full speed.';
 });
 $('#btnSwap').addEventListener('click', () => {
   manual(); S.dir = -S.dir; S.u = -S.u; simActive = true; simKind = 'swap'; render();
+  guide(5, 'Watch the board above: the field arrows turn the other way, and the rotor slows, stops, and follows them.');
   $('#narration').textContent = 'Leads B and C swapped: the phase order is now ' + (S.dir > 0 ? 'A-B-C' : 'A-C-B') + ', so the field turns the other way. ' + (S.u < -0.5 ? 'The rotor still turns the old way, against the field, so the slip is above 1 and the motor brakes before it reverses.' : 'The motor starts in the new direction.');
 });
 $('#btnSpin').addEventListener('click', () => { spinOn = !spinOn; const b = $('#btnSpin'); b.textContent = spinOn ? 'Pause spin' : 'Resume spin'; b.setAttribute('aria-pressed', String(!spinOn)); });

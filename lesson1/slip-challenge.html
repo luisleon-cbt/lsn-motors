@@ -234,6 +234,33 @@
     .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---- stacked layout (v2, October 29 2026): the board uses the full width of the page, instructions and controls go below it ---- */
+  .app{display:block;height:auto;min-height:0}
+  .app>.lab-head{max-width:1240px;margin:0 auto;padding:18px 16px 14px}
+  .app>.lab-head h1{font-size:clamp(24px,3vw,32px);margin:4px 0 6px}
+  .app>.stage{width:100%;height:clamp(420px,70vh,860px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .panel{max-width:1240px;margin:0 auto;border-left:0;overflow:visible;background:none;display:block;columns:2 420px;column-gap:28px;padding:20px 16px 28px}
+  .panel>*{break-inside:avoid;margin:0 0 22px}
+  .panel>header,.panel>footer,.panel>.guide,.panel>.span-all{column-span:all}
+  /* how to use: numbered steps with the current one highlighted, plus a "do this now" line */
+  .guide{max-width:1240px;margin:0 auto;padding:18px 16px 4px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px 26px;align-items:start}
+  .guide h2{grid-column:1/-1;margin:0;font-size:18px}
+  .guide ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:s}
+  .guide ol.steps li{counter-increment:s;position:relative;padding:8px 10px 8px 44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--silk);font-size:15px;line-height:1.45}
+  .guide ol.steps li::before{content:counter(s);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--font-mono);background:var(--line);color:var(--silk)}
+  .guide ol.steps li.current{border-color:var(--cbt-gold);background:var(--panel-2)}
+  .guide ol.steps li.current::before{background:var(--cbt-gold);color:var(--cbt-navy)}
+  .guide ol.steps li.done{color:var(--silk-dim)}
+  .guide ol.steps li.done::before{content:"\2713";background:var(--ok);color:#06120f}
+  .guide ol.steps li b,.guide .now b{color:var(--cbt-gold);font-weight:600}
+  .guide .now{border-left:4px solid var(--cbt-sky);background:var(--panel-2);border-radius:6px;padding:14px 16px;font-size:16px;line-height:1.5;color:var(--silk)}
+  .guide .now .k{display:block;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);margin-bottom:4px}
+  .guide .tips{margin:10px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--silk-dim);display:grid;gap:4px}
+  @media(max-width:860px){.guide{grid-template-columns:1fr}.panel{columns:1}}
+  /* page mode: board card on top across the full width, the round or task below */
+  .card .stage.wide{aspect-ratio:21/9;min-height:360px}
+  @media(max-width:860px){.card .stage.wide{aspect-ratio:4/3;min-height:0}}
   /* ===== end of theme ===== */
 
   /* page-specific CSS below (page mode challenge) */
@@ -261,10 +288,19 @@
   #resTable td.pts.ok{color:var(--ok)} #resTable td.pts.part{color:var(--warn)} #resTable td.pts.bad{color:var(--bad)}
   #resTable tr.tot td{border-bottom:0;padding-top:10px;white-space:nowrap}
   @media(max-width:520px){.qhead{padding-right:0}.qhead h2{padding-right:70px}}
-  /* zoom buttons in a row under the board, so they never cover the value chips */
-  .card .stage .zoomctl{top:auto;bottom:10px;right:10px;transform:none;flex-direction:row}
-  .card .stage .zoomctl button{height:30px}
-  .card .stage .zoomctl{align-items:center}.card .stage .zoomctl .pad{border-top:0;border-left:1px solid var(--line);margin:0 2px;padding:0 0 0 4px;grid-template-columns:repeat(3,22px);grid-template-rows:repeat(3,22px)}.card .stage .zoomctl .pad button{width:22px;height:22px;font-size:10px}
+  #boardCard .qhead{margin-bottom:10px}
+  #boardCard .motorname{margin:0}
+  #boardCard .stepper{flex-wrap:wrap;align-items:center}
+  .guide+.howto{margin:0 0 14px}
+  /* on phones the zoom buttons sit in one thin row along the top of the board, above the chips, so they never cover a value */
+  @media(max-width:860px){
+    .card .stage .zoomctl{top:6px;bottom:auto;right:6px;transform:none;flex-direction:row;align-items:center;padding:2px}
+    .card .stage .zoomctl>button{width:30px;height:26px;font-size:16px}
+    .card .stage .zoomctl>button.fit{width:34px;height:26px;font-size:9.5px}
+    .card .stage .zoomctl .pad{border-top:0;border-left:1px solid var(--line);border-right:1px solid var(--line);margin:0 2px;padding:0 3px;grid-template-columns:repeat(5,24px);grid-template-rows:24px}
+    .card .stage .zoomctl .pad button{width:24px;height:24px;font-size:10px}
+    .card .stage .zoomctl .pad .l{grid-area:1/1}.card .stage .zoomctl .pad .u{grid-area:1/2}.card .stage .zoomctl .pad .c{grid-area:1/3}.card .stage .zoomctl .pad .d{grid-area:1/4}.card .stage .zoomctl .pad .r{grid-area:1/5}
+  }
 </style>
 </head>
 <body>
@@ -280,32 +316,44 @@
     <div><span class="eyebrow">LSN-MOTORS · Lesson 1 · Challenge</span><h1>Slip and speed challenge</h1><p class="lede">Ten motors at Biscayne Cold Storage. Work out the synchronous speed, the poles, the slip, and the rotor frequency, and explain what the numbers mean.</p></div>
     <div class="spec"><div><b id="specRounds">10</b><span>rounds, 10 points each</span></div><div><b>100</b><span>points</span></div><div><b>Partial</b><span>credit where fair</span></div><div><b>Shuffled</b><span>every attempt</span></div></div>
   </section>
-  <details class="howto reveal" style="--i:1"><summary>How this challenge works</summary>
-    <ol><li>Read the situation. The board shows the motor: the glowing arrow is the rotating magnetic field of the stator, and the round part inside is the rotor. A value marked ? is the one you work out.</li><li>Pick an answer and press Check to see your points, the worked math, and why.</li><li>Press Play (or Step and Back) to watch the explanation on the board: green when your answer was the best, coral when it needs review.</li><li>Finish all ten rounds, review the results table, and try again.</li></ol>
-    <p class="muted howto-note">Words to know: Ns (synchronous speed) is how fast the stator's magnetic field turns. Nr is the rotor speed, read with a tachometer. Slip is how far the rotor falls behind the field, as a part of Ns. Rotor frequency (fr) is how many times a second the rotor currents change direction. FLA is the full-load amps on the nameplate. A VFD (variable frequency drive) changes the frequency sent to the motor.</p>
+  <section class="card reveal" style="--i:1" id="boardCard" data-ref="U1 · BOARD">
+    <div class="qhead"><h2>Watch it on the board</h2><p class="motorname"><span class="muted">Motor:</span> <b id="motorName"></b></p></div>
+    <div class="stage wide" id="stage"><div class="nogl" id="nogl" hidden>The 3D view is not available here. The flat board shows the same steps.</div></div>
+    <div class="legend boardlegend"><span style="--c:#E0B840"><i></i>3-phase supply</span><span style="--c:#9FE7FF"><i></i>rotating field</span><span style="--c:#38B0E0"><i></i>values (blue chip: the value this round asks for)</span><span style="--c:#A9B4FF"><i></i>the math</span><span style="--c:#6FD49B"><i></i>your answer was best</span><span style="--c:#F0786A"><i></i>review</span></div>
+    <div class="caption" id="cap" aria-live="polite"><div class="t" id="capT">Ready</div><p id="capB" style="margin:0">After you check an answer, press Play the explanation to see why.</p></div>
+    <div class="stepper"><button class="btn go" id="btnPlay" type="button" disabled>Play the explanation</button><button class="btn" id="btnBack" type="button" disabled>Step back</button><button class="btn" id="btnStep" type="button" disabled>Step</button><div class="score" style="margin-left:auto"><span class="big" id="score">0</span><span>points so far, out of 100</span></div></div>
+  </section>
+  <section class="guide reveal" style="--i:2;padding:18px 0 16px" aria-labelledby="guideTitle">
+    <h2 id="guideTitle">How this challenge works</h2>
+    <ol class="steps" id="howSteps">
+      <li data-h="1">Read the round in the card below the board. On the board above, the chip marked in blue is the value you work out. Click the answer you think is right (A to D).</li>
+      <li data-h="2">Press <b>Check</b>. Your points and the worked math appear under the answers. If your answer was not the best one, the best answer is shown too.</li>
+      <li data-h="3">Press <b>Play the explanation</b> to watch the math on the board above, one step at a time. Green means your answer was the best one. Coral means review it. Use <b>Step</b> and <b>Step back</b> to go at your own pace.</li>
+      <li data-h="4">Press <b>Next round</b>. There are 10 rounds, worth 10 points each, and some wrong answers still earn partial credit.</li>
+      <li data-h="5">After round 10, press <b>See results</b> and read the table at the bottom of the page. Press <b>Try again</b> for a new order of rounds and answers.</li>
+    </ol>
+    <div>
+      <div class="now" aria-live="polite"><span class="k">Do this now</span><span id="nowText">Read round 1 below the board. Then click the answer you think is right.</span></div>
+      <ul class="tips">
+        <li>The formulas you need are printed above the question in every round.</li>
+        <li>Drag on the board to turn it. Use <b>+</b>, <b>&minus;</b>, the arrows, and <b>FIT</b> to look closer or see the whole board again.</li>
+      </ul>
+    </div>
+  </section>
+  <details class="howto reveal" style="--i:3"><summary>Words to know and the teaching model</summary>
+    <p class="muted howto-note">Ns (synchronous speed) is how fast the stator's magnetic field turns. Nr is the rotor speed, read with a tachometer. Slip is how far the rotor falls behind the field, as a part of Ns. Rotor frequency (fr) is how many times a second the rotor currents change direction. FLA is the full-load amps on the nameplate. A VFD (variable frequency drive) changes the frequency sent to the motor.</p>
     <p class="muted howto-note">The current and power factor rounds use the lesson's simplified teaching model (rotor resistance R2 = 0.04 and standstill reactance X20 = 0.20, per unit). It leaves out the stator resistance and other losses. Real motors draw roughly 5 to 7 times full-load current at start.</p>
   </details>
-  <div class="grid two">
-    <section class="card reveal" style="--i:2" data-ref="U1 · ROUND">
-      <div class="progress" id="prog"></div>
-      <div class="qhead"><h2 id="qTitle">Round 1</h2><span class="pill" id="qTopic"></span></div>
-      <div class="fstrip" aria-label="Formulas"><code>Ns = 120 × f / P</code><code>s = (Ns - Nr) / Ns</code><code>% slip = s × 100</code><code>fr = s × f</code></div>
-      <p id="qText" class="qtext"></p>
-      <div class="opts" id="opts"></div>
-      <div class="stepper"><button class="btn primary" id="btnCheck" type="button">Check</button><button class="btn" id="btnNext" type="button" disabled>Next round</button></div>
-      <div id="fb" aria-live="polite"></div>
-    </section>
-    <aside class="card reveal" style="--i:3" data-ref="U2 · BOARD">
-      <h2>Watch it on the board</h2>
-      <p class="motorname"><span class="muted">Motor:</span> <b id="motorName"></b></p>
-      <div class="stage" id="stage"><div class="nogl" id="nogl" hidden>Flat board (no 3D here). Same steps.</div></div>
-      <div class="legend boardlegend"><span style="--c:#E0B840"><i></i>3-phase supply</span><span style="--c:#9FE7FF"><i></i>rotating field</span><span style="--c:#38B0E0"><i></i>values</span><span style="--c:#A9B4FF"><i></i>the math</span><span style="--c:#6FD49B"><i></i>your answer was best</span><span style="--c:#F0786A"><i></i>review</span></div>
-      <div class="caption" id="cap" aria-live="polite"><div class="t" id="capT">Ready</div><p id="capB" style="margin:0">After you check an answer, press Play to see why.</p></div>
-      <div class="stepper"><button class="btn" id="btnBack" type="button" disabled>Back</button><button class="btn" id="btnStep" type="button" disabled>Step</button><button class="btn go" id="btnPlay" type="button" disabled>Play the explanation</button></div>
-      <div class="score" style="margin-top:14px"><span class="big" id="score">0</span><span>points so far, out of 100</span></div>
-    </aside>
-  </div>
-  <section class="card reveal" style="--i:4;margin-top:14px" id="results" hidden data-ref="U3 · RESULTS">
+  <section class="card reveal" style="--i:4;margin-top:14px" id="roundCard" data-ref="U2 · ROUND">
+    <div class="progress" id="prog"></div>
+    <div class="qhead"><h2 id="qTitle">Round 1</h2><span class="pill" id="qTopic"></span></div>
+    <div class="fstrip" aria-label="Formulas"><code>Ns = 120 × f / P</code><code>s = (Ns - Nr) / Ns</code><code>% slip = s × 100</code><code>fr = s × f</code></div>
+    <p id="qText" class="qtext"></p>
+    <div class="opts" id="opts"></div>
+    <div class="stepper"><button class="btn primary" id="btnCheck" type="button">Check</button><button class="btn" id="btnNext" type="button" disabled>Next round</button></div>
+    <div id="fb" aria-live="polite"></div>
+  </section>
+  <section class="card reveal" style="--i:5;margin-top:14px" id="results" hidden data-ref="U3 · RESULTS">
     <h2>Your results</h2>
     <p class="muted" id="resNote" style="margin:0 0 10px"></p>
     <div class="scroll-x"><table class="data" id="resTable"></table></div>
@@ -318,6 +366,11 @@
 (function () {
 "use strict";
 const hasGSAP = typeof window.gsap !== 'undefined';
+// guide block: mark the current step (1-based) and say the single next action
+function guide(stepNo, nowHtml) {
+  document.querySelectorAll('#howSteps li').forEach(li => { const n = +li.dataset.h; li.classList.toggle('done', n < stepNo); li.classList.toggle('current', n === stepNo); });
+  if (nowHtml) document.getElementById('nowText').innerHTML = nowHtml;
+}
 const $ = s => document.querySelector(s);
 // LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
 // Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
@@ -545,11 +598,15 @@ function Lab3D(stage, opts) {
     if (name === 'overview' || !views[name]) {
       // the overview (and FIT) must show the whole board width, also on narrow phone screens,
       // leaving room for the zoom buttons at the right edge
-      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      // and, on wide stages, fill the stage: the board fits both the width and the height of the view, no more, no less
+      const tanV = Math.tan(T.MathUtils.degToRad(camera.fov / 2)), tanH = tanV * camera.aspect;
+      const dist0 = pos.distanceTo(tgt), sinE = Math.max(0.3, (pos.y - tgt.y) / dist0);
       const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
-      f = Math.max(f, need / pos.distanceTo(tgt));
-      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
-      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+      const needD = (B.d / 2 * sinE + 0.8) / (tanV * 0.78) + B.d * 0.25;   // 0.78 leaves room for the HUD bars at the top and bottom
+      f = Math.max(need, needD) / dist0;
+      const need2 = Math.max(need, needD);
+      controls.maxDistance = Math.max(controls.maxDistance, need2 * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need2 * 1.1); scene.fog.far = Math.max(scene.fog.far, need2 * 2.6); }
     }
     pos.sub(tgt).multiplyScalar(f).add(tgt);
     return {pos: pos, tgt: tgt};
@@ -951,8 +1008,10 @@ function motorAfter(R, upto) { const m = Object.assign({}, R.m0); for (let i = 0
 
 // ---- 3D board with the Lab3D kit ----
 function board3D(stage) {
+  // wide stage: a lower camera so the board fills the width; phone: a steeper camera keeps the chip labels apart
+  const narrow = stage.clientWidth < 600;
   const lab = Lab3D(stage, {board: {w: 13.2, d: 7.6, silk: 'BISCAYNE COLD STORAGE  MOTOR BENCH  LSN-MOTORS', seed: 9},
-    views: {overview: {pos: [0, 13, 4.6], tgt: [0, 0, 0.5], want: 1.5}}});
+    views: {overview: narrow ? {pos: [0, 13, 4.6], tgt: [0, 0, -0.3], want: 1.5} : {pos: [0, 8, 10.5], tgt: [0, 0, 0.6], want: 1.5}}});
   if (!lab) return null;
   const T = lab.T, mats = {}, recs = {};
   Object.entries(LINK).forEach(([k, l]) => { mats[k] = lab.busMat(C[l.k]); lab.trace(l.p, l.n, mats[k]); });
@@ -1099,10 +1158,12 @@ async function showStep(i) {
   await G.run(s, stepColor());
   if (my !== token) return false;
   G.config(cfgAfter(R, i + 1));
+  if (!playing) guideAfterStep(i);
   return true;
 }
 async function play() {
   const R = ROUNDS[order[r]]; playing = true; const my = token + 1; setStepButtons();
+  guide(3, 'Watch the board above. The caption under it explains each step.');
   // start from the round's opening state so Play again shows the whole story
   setMotor(motorAfter(R, 0), true);
   for (let i = 0; i < R.steps.length; i++) {
@@ -1110,8 +1171,15 @@ async function play() {
     if (i < R.steps.length - 1) { await wait(RM ? 1800 : Math.min(3200, 1200 + R.steps[i].t.length * 12)); if (token !== my + i) { playing = false; setStepButtons(); return; } }
   }
   playing = false; setStepButtons();
+  guide(4, 'The explanation is done. ' + nextWords());
 }
 function stopPlay() { token++; playing = false; if (G) G.stop(); }
+const nextWords = () => r === ROUNDS.length - 1 ? 'Press <b>See results</b> to see your score for every round.' : 'Press <b>Next round</b> for round ' + (r + 2) + ' of ' + ROUNDS.length + '.';
+function guideAfterStep(i) {
+  const n = ROUNDS[order[r]].steps.length;
+  if (i >= n - 1) guide(4, 'That was the last step of the explanation. ' + nextWords());
+  else guide(3, 'You are on step ' + (i + 1) + ' of ' + n + '. Read the caption under the board, then press <b>Step</b> for the next one.');
+}
 
 // ---- the challenge ----
 function drawProgress() { $('#prog').innerHTML = ROUNDS.map((_, i) => { const l = log[i]; return '<i class="' + (l ? (l.pts === l.max ? 'ok' : l.pts > 0 ? 'part' : 'bad') : i === r ? 'now' : '') + '"></i>'; }).join(''); }
@@ -1125,12 +1193,13 @@ function showRound() {
   $('#btnCheck').disabled = false; $('#btnNext').disabled = true; $('#btnNext').textContent = 'Next round';
   G.config(cfgBefore(R)); G.mark([R.ask], C.ask); setMotor(R.m0, true);
   $('#cap').style.removeProperty('--cap'); $('#capT').textContent = 'The motor in this round';
-  $('#capB').textContent = 'The arrow is the field turning at Ns and the rotor turns at Nr. The chip marked in blue is the one this round is about. After you check your answer, play the explanation.';
+  $('#capB').textContent = 'The arrow is the field, turning at Ns. The rotor inside it turns at Nr. The chip marked in blue is the value this round asks about. After you check your answer, press Play the explanation.';
   setStepButtons(); drawProgress();
+  guide(1, 'Read round ' + (r + 1) + ' of ' + ROUNDS.length + ' below the board. Then click the answer you think is right.');
 }
-$('#opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; picked = +b.dataset.i; document.querySelectorAll('#opts button').forEach(x => { x.setAttribute('aria-pressed', x === b); x.classList.toggle('sel', x === b); }); });
+$('#opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; picked = +b.dataset.i; document.querySelectorAll('#opts button').forEach(x => { x.setAttribute('aria-pressed', x === b); x.classList.toggle('sel', x === b); }); $('#fb').innerHTML = ''; guide(2, 'Press <b>Check</b> to see your points. You can still click a different answer first.'); });
 $('#btnCheck').addEventListener('click', () => {
-  if (picked == null) { $('#fb').innerHTML = '<div class="feedback info">Pick an answer first.</div>'; return; }
+  if (picked == null) { $('#fb').innerHTML = '<div class="feedback info">No answer is picked yet. Click one of the answers A to D above, then press Check.</div>'; guide(1, 'Click one of the answers A to D first. Then press <b>Check</b>.'); return; }
   const R = ROUNDS[order[r]], o = R._opts[picked], max = Math.max(...R.opts.map(x => x[1])), best = R._opts.find(x => x[1] === max);
   total += o[1]; log[r] = {topic: R.topic, a: o[3], best: best[3], pts: o[1], max: max};
   document.querySelectorAll('#opts button').forEach((b, i) => { b.disabled = true; b.classList.remove('sel'); if (R._opts[i] === best) b.classList.add('right'); else if (i === picked) b.classList.add('wrong'); });
@@ -1140,8 +1209,9 @@ $('#btnCheck').addEventListener('click', () => {
   G.config(cfgAfter(R, 0)); G.mark([R.ask], o === best ? C.ok : C.bad);
   $('#cap').style.setProperty('--cap', o === best ? 'var(--ok)' : 'var(--bad)');
   $('#capT').textContent = o === best ? 'Your answer matches' : 'Review the best answer';
-  $('#capB').textContent = 'The board now shows the real values. Press Play to watch the math step by step, or use Step and Back to go at your own pace.';
+  $('#capB').textContent = 'The board now shows the real values. Press Play the explanation to watch the math step by step, or press Step to go one step at a time.';
   drawProgress(); setStepButtons();
+  guide(3, (o === best ? 'Your answer is the best one. ' : 'Read the feedback under the answers below. ') + 'Then press <b>Play the explanation</b> to watch the math on the board above.');
 });
 $('#btnPlay').addEventListener('click', () => { if (!log[r] || playing) return; play(); });
 $('#btnStep').addEventListener('click', () => { if (!log[r]) return; stopPlay(); showStep(Math.min(si + 1, ROUNDS[order[r]].steps.length - 1)); });
@@ -1151,13 +1221,14 @@ function finishAll() {
   stopPlay();
   $('#results').hidden = false; $('#qTitle').textContent = 'Finished'; $('#qTopic').textContent = 'All ten motors'; $('#qText').textContent = 'Your score: ' + total + ' out of 100. The table below shows every round.'; $('#opts').innerHTML = ''; $('#fb').innerHTML = ''; $('#btnCheck').disabled = true; $('#btnNext').disabled = true;
   $('#btnPlay').disabled = true; $('#btnStep').disabled = true; $('#btnBack').disabled = true;
-  $('#cap').style.removeProperty('--cap'); $('#capT').textContent = 'All rounds done'; $('#capB').textContent = 'Check the results table below. Press Try again for a new order of rounds and answers.';
+  $('#cap').style.removeProperty('--cap'); $('#capT').textContent = 'All rounds done'; $('#capB').textContent = 'Check the results table at the bottom of the page. Press Try again for a new order of rounds and answers.';
+  guide(5, 'Your score is ' + total + ' out of 100. Review the results table below. Then press <b>Try again</b> for a new order of rounds.');
   $('#resTable').innerHTML = '<tr><th>Round</th><th>Topic</th><th>Your answer</th><th>Points</th></tr>' + log.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.topic) + '</td><td>' + esc(l.a) + (l.pts === l.max ? '' : '<span class="muted bestcell">Best: ' + esc(l.best) + '</span>') + '</td><td class="pts ' + (l.pts === l.max ? 'ok' : l.pts > 0 ? 'part' : 'bad') + '">' + l.pts + ' / ' + l.max + '</td></tr>').join('') + '<tr class="tot"><td colspan="3"><b>Total</b></td><td><b>' + total + ' / 100</b></td></tr>';
   $('#resNote').textContent = total === 100 ? 'Every motor checks out. Use the same steps on the nameplate worksheet for the activity sheet.' : total >= 70 ? 'Good work. Review the rounds marked in gold or coral, then try again for 100.' : 'Review the feedback for each round, then try again. Every attempt shuffles the rounds and the answers.';
   drawProgress(); $('#results').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'});
 }
 function start() { order = shuffle(ROUNDS.map((_, i) => i)); r = 0; total = 0; log = []; $('#score').textContent = 0; $('#results').hidden = true; $('#specRounds').textContent = ROUNDS.length; showRound(); }
-$('#btnAgain').addEventListener('click', () => { start(); document.querySelector('.grid.two').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); });
+$('#btnAgain').addEventListener('click', () => { start(); document.getElementById('boardCard').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); });
 try { G = board3D($('#stage')); } catch (e) { console.error(e); G = null; }
 if (!G) { $('#stage').querySelectorAll('canvas,.labels,.zoomctl').forEach(n => n.remove()); G = board2D($('#stage')); }
 // hooks for automated tests: the points of the current options and the playback state

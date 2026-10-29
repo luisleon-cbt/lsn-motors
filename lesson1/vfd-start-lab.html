@@ -234,12 +234,36 @@
     .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---- stacked layout (v2, October 29 2026): the board uses the full width of the page, instructions and controls go below it ---- */
+  .app{display:block;height:auto;min-height:0}
+  .app>.lab-head{max-width:1240px;margin:0 auto;padding:18px 16px 14px}
+  .app>.lab-head h1{font-size:clamp(24px,3vw,32px);margin:4px 0 6px}
+  .app>.stage{width:100%;height:clamp(420px,70vh,860px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .panel{max-width:1240px;margin:0 auto;border-left:0;overflow:visible;background:none;display:block;columns:2 420px;column-gap:28px;padding:20px 16px 28px}
+  .panel>*{break-inside:avoid;margin:0 0 22px}
+  .panel>header,.panel>footer,.panel>.guide,.panel>.span-all{column-span:all}
+  /* how to use: numbered steps with the current one highlighted, plus a "do this now" line */
+  .guide{max-width:1240px;margin:0 auto;padding:18px 16px 4px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px 26px;align-items:start}
+  .guide h2{grid-column:1/-1;margin:0;font-size:18px}
+  .guide ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:s}
+  .guide ol.steps li{counter-increment:s;position:relative;padding:8px 10px 8px 44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--silk);font-size:15px;line-height:1.45}
+  .guide ol.steps li::before{content:counter(s);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--font-mono);background:var(--line);color:var(--silk)}
+  .guide ol.steps li.current{border-color:var(--cbt-gold);background:var(--panel-2)}
+  .guide ol.steps li.current::before{background:var(--cbt-gold);color:var(--cbt-navy)}
+  .guide ol.steps li.done{color:var(--silk-dim)}
+  .guide ol.steps li.done::before{content:"\2713";background:var(--ok);color:#06120f}
+  .guide ol.steps li b,.guide .now b{color:var(--cbt-gold);font-weight:600}
+  .guide .now{border-left:4px solid var(--cbt-sky);background:var(--panel-2);border-radius:6px;padding:14px 16px;font-size:16px;line-height:1.5;color:var(--silk)}
+  .guide .now .k{display:block;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);margin-bottom:4px}
+  .guide .tips{margin:10px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--silk-dim);display:grid;gap:4px}
+  @media(max-width:860px){.guide{grid-template-columns:1fr}.panel{columns:1}}
+  /* page mode: board card on top across the full width, the round or task below */
+  .card .stage.wide{aspect-ratio:21/9;min-height:360px}
+  @media(max-width:860px){.card .stage.wide{aspect-ratio:4/3;min-height:0}}
   /* ===== end of theme ===== */
 
-  /* page-specific CSS: start-up and VFD lab simulator. A wider control panel holds the bench controls, meters, charts, and work order. */
-  .app.lab{grid-template-columns:minmax(0,1fr) minmax(440px,540px)}
-  @media(max-width:1100px){.app.lab{grid-template-columns:minmax(0,1fr) 430px}}
-  @media(max-width:860px){.app.lab{grid-template-columns:1fr}.app.lab .stage{height:64vh;min-height:420px}}
+  /* page-specific CSS: start-up and VFD lab simulator. Below the full-width board: narration and safety beside the bench and meters, then both charts side by side, then the work order across the width. */
   .hud .benchstat{background:rgba(11,15,43,.78);border:1px solid var(--line);border-radius:6px;backdrop-filter:blur(6px);font:500 11px var(--font-mono);color:var(--silk);padding:8px 10px;letter-spacing:.03em;font-variant-numeric:tabular-nums}
   .hud .benchstat b{color:var(--cbt-gold);font-weight:600}
   .hud .benchstat.hot{border-color:var(--bad)}
@@ -249,7 +273,17 @@
   .kpd .st.lim{color:#F0786A}
   .lock3d{pointer-events:none;font:700 calc(var(--lab) * .8) var(--font-mono);letter-spacing:.08em;color:#1a0d0b;background:var(--bad);padding:1px 5px;border-radius:2px;white-space:nowrap}
   .small{font-size:12.5px}
-  .panel{gap:18px}
+  .duo,.charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 30px;align-items:start}
+  .duo .col{display:flex;flex-direction:column;gap:20px;min-width:0}
+  .wo .tasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  .wo .tasks #t-calc,.wo .tasks #t-rec{grid-column:1/-1}
+  .ack{display:flex;gap:9px;align-items:center;margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--panel-2);font-size:13.5px;color:var(--silk);cursor:pointer}
+  .ack:has(input:checked){border-color:var(--ok);background:rgba(111,212,155,.08)}
+  .narr p{min-height:0}
+  @media(max-width:860px){.duo,.charts,.wo .tasks{grid-template-columns:1fr}}
+  @media(max-width:860px){.guide>h2{order:-2}.guide>div{order:-1}}   /* phones: "Do this now" right under the heading, before the numbered steps */
+  @media(min-width:521px){.crow{grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,1.3fr)}}
+  @media(min-width:861px){.stage:has(.nogl:not([hidden])) .flat{top:92px;height:calc(100% - 146px)}}
   .narr .controls{margin-top:2px;grid-template-columns:repeat(4,minmax(0,1fr))}
   @media(max-width:520px){.narr .controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .safety{border:1px solid rgba(240,120,106,.45);border-left:4px solid var(--bad);border-radius:6px;padding:11px 13px;background:rgba(240,120,106,.06)}
@@ -347,6 +381,11 @@
 </header>
 
 <div class="app lab">
+  <header class="lab-head">
+    <p class="eyebrow">LSN-MOTORS · Lesson 1 · Lab simulator</p>
+    <h1>Start-up and VFD lab</h1>
+    <p class="lede">Start the conveyor motor across the line and capture the inrush, then run it from a VFD and see how frequency sets the speed. Practice here before the instructor starts the real motor trainer.</p>
+  </header>
   <section class="stage" id="stage" aria-label="3D view of the motor trainer: 208 V supply, disconnect, contactor, VFD, clamp meter, conveyor motor CV-2, tachometer, and the brake and belt load. Drag to orbit, use the zoom buttons or scroll to zoom, click a part to learn what it does.">
     <div class="hud hud-top">
       <ol class="phases" aria-label="Phase">
@@ -377,112 +416,134 @@
     <div class="nogl" id="nogl" hidden>The 3D view needs WebGL and the 3D libraries, which are not available here. The flat bench shows the same lab.</div>
   </section>
 
-  <aside class="panel">
-    <header>
-      <p class="eyebrow">LSN-MOTORS · Lesson 1 · Lab simulator</p>
-      <h1>Start-up and VFD lab</h1>
-      <p class="lede">Start the conveyor motor across the line and capture the inrush, then run it from a VFD and see how frequency sets the speed. Practice here before the instructor starts the real motor trainer.</p>
-    </header>
-
-    <section class="narr" aria-live="polite">
-      <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 12</span></div>
-      <p id="narration">Press Step to walk through the lab procedure one step at a time, or Play to watch all of it. You can also run the bench yourself with the controls below.</p>
-      <div class="controls">
-        <button type="button" class="btn primary" id="btnRun">Play</button>
-        <button type="button" class="btn" id="btnStep">Step</button>
-        <button type="button" class="btn" id="btnBack">Step back</button>
-        <button type="button" class="btn" id="btnReset">Reset</button>
-      </div>
-      <div class="speed"><label for="speed">Playback</label><input type="range" id="speed" min="0" max="4" step="1" value="2"><output id="speedOut">1×</output></div>
-      <p class="hint">Playback also sets bench time: at 0.25× an across-the-line start (about 1.3 s) takes about 5 s to watch. Keyboard: Space steps, B steps back, R plays or pauses, + and - zoom.</p>
-    </section>
-
-    <section class="safety" aria-labelledby="safeH">
-      <h2 id="safeH">Safety on the real trainer</h2>
-      <ul>
-        <li>The instructor energizes and de-energizes the trainer. You measure and record.</li>
-        <li>Lockout/tagout before any wiring change, including moving the motor leads to the VFD. Verify zero voltage before you touch a terminal.</li>
-        <li>The shaft and coupling guard stays in place. Keep hands, sleeves, and badges away from the shaft and the belt.</li>
-        <li>Clamp the meter around one motor lead only, with the jaw fully closed, and keep your hands behind the guard on the meter.</li>
+  <section class="guide" aria-labelledby="guideTitle">
+    <h2 id="guideTitle">How to use this lab</h2>
+    <ol class="steps" id="howSteps">
+      <li data-h="1">Read <b>Safety on the real trainer</b> below and tick <b>I have read these rules</b>. On the real trainer only the instructor turns the disconnect on and off.</li>
+      <li data-h="2">Start across the line. In <b>Bench controls</b>, set <b>Clamp meter</b> to <b>INRUSH</b> and <b>Brake load</b> to <b>100 % (rated)</b>. Press <b>Turn on</b>, then <b>Start</b>, and watch the current jump on the strip chart. Type the captured peak in work order task 1. Then set the meter to <b>A</b> and type the settled current in task 2. Press <b>Check</b> after each task.</li>
+      <li data-h="3">Run the VFD (variable frequency drive). Press <b>Stop</b> and <b>Turn off and lock</b>, then press <b>VFD</b>. Set the meter to <b>MAX</b>, press <b>30 Hz</b>, <b>Turn on</b>, and <b>Start</b>. Type the MAX current in task 3. Then press <b>45 Hz</b> and <b>60 Hz</b>. Each time, wait until TACH says steady and type the speed on that card in task 5.</li>
+      <li data-h="4">On each card in task 5, work out Ns = 120 × f / 4, the slip speed (Ns minus your speed), and the percent slip. Press <b>Check speeds and calculations</b>. A red note under a card shows the worked math: fix the value and check again.</li>
+      <li data-h="5">Answer Rosa in task 6. Choose <b>Install the VFD</b> or <b>Keep the across-the-line starter</b>, tick every true reason, and press <b>Check</b>. Your score out of 100 is at the top of the work order.</li>
+    </ol>
+    <div>
+      <div class="now" aria-live="polite"><span class="k">Do this now</span><span id="nowText">Read <b>Safety on the real trainer</b> below and tick <b>I have read these rules</b>.</span></div>
+      <ul class="tips">
+        <li>Want to watch first? Press <b>Play</b> below the board for the whole procedure, or <b>Step</b> for one step at a time. <b>Playback</b> also sets how fast bench time runs.</li>
+        <li>Click any part on the board to read what it does.</li>
+        <li>Drag on the board to turn it. Use <b>+</b>, <b>&minus;</b>, and <b>FIT</b> to zoom, the arrows to move, or the view buttons on the board (Overview, Starters, Motor, Follow).</li>
+        <li>Keyboard: Space steps, B steps back, R plays or pauses, + and - zoom.</li>
       </ul>
-    </section>
+    </div>
+  </section>
 
-    <section class="bench" aria-labelledby="benchH">
-      <h2 id="benchH">Bench controls</h2>
-      <div class="seg" role="group" aria-label="Starter">
-        <button type="button" id="modeAtl" aria-pressed="true">Across the line</button>
-        <button type="button" id="modeVfd" aria-pressed="false">VFD</button>
-      </div>
-      <div class="crow">
-        <label>Disconnect (instructor)<button type="button" class="btn" id="btnDisc" aria-pressed="false">Off, locked</button></label>
-        <label>Brake load
-          <select id="selLoad">
-            <option value="0">No load</option>
-            <option value="0.25">25 %</option>
-            <option value="0.5">50 %</option>
-            <option value="0.75">75 %</option>
-            <option value="1" selected>100 % (rated)</option>
-          </select>
-        </label>
-        <label>Clamp meter
-          <select id="selMeter">
-            <option value="A">A (live current)</option>
-            <option value="INRUSH">INRUSH (first 100 ms)</option>
-            <option value="MAX">MAX (highest reading)</option>
-          </select>
-        </label>
-      </div>
-      <div class="vrow off" id="vfdRow">
-        <label>VFD set frequency
-          <span class="frq"><input type="range" id="rngF" min="10" max="60" step="1" value="30" aria-label="VFD set frequency in hertz"><output id="outF">30 Hz</output></span>
-          <span class="quick" role="group" aria-label="Quick frequencies"><button type="button" data-f="30">30 Hz</button><button type="button" data-f="45">45 Hz</button><button type="button" data-f="60">60 Hz</button></span>
-        </label>
-        <label>Ramp time
-          <select id="selRamp">
-            <option value="1">1 s</option>
-            <option value="2">2 s</option>
-            <option value="5" selected>5 s</option>
-            <option value="8">8 s</option>
-            <option value="10">10 s</option>
-          </select>
-        </label>
-      </div>
-      <div class="sbtns">
-        <button type="button" class="btn primary" id="btnStart">Start</button>
-        <button type="button" class="btn stop" id="btnStop">Stop</button>
-      </div>
-      <p class="benchmsg" id="benchMsg" role="status">The disconnect is off and locked. Pick the starter, the load, and the meter setting, then turn on the disconnect.</p>
-    </section>
+  <aside class="panel">
+    <div class="span-all duo">
+      <div class="col">
+        <section class="narr" aria-live="polite">
+          <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 12</span></div>
+          <p id="narration">Press Step to walk through the lab procedure one step at a time, or Play to watch all of it. You can also run the bench yourself with Bench controls.</p>
+          <div class="controls">
+            <button type="button" class="btn primary" id="btnRun">Play</button>
+            <button type="button" class="btn" id="btnStep">Step</button>
+            <button type="button" class="btn" id="btnBack">Step back</button>
+            <button type="button" class="btn" id="btnReset">Reset</button>
+          </div>
+          <div class="speed"><label for="speed">Playback</label><input type="range" id="speed" min="0" max="4" step="1" value="2"><output id="speedOut">1×</output></div>
+          <p class="hint">Playback also sets bench time: at 0.25× an across-the-line start (about 1.3 s) takes about 5 s to watch.</p>
+        </section>
 
-    <section aria-labelledby="metH">
-      <h2 id="metH">Meters <small>what you would read on the trainer</small></h2>
-      <div class="regs m4">
-        <div class="reg kv" id="r-I"><span class="rn">CLAMP</span><span class="rv" id="v-I">0.00 A</span><span class="rf">Clamp meter on L1</span><span class="rs" id="s-I">A, live</span></div>
-        <div class="reg kv" id="r-N"><span class="rn">TACH</span><span class="rv grn" id="v-N">0 RPM</span><span class="rf">Optical tachometer</span><span class="rs" id="s-N">shaft at rest</span></div>
-        <div class="reg kv" id="r-F"><span class="rn">FREQ</span><span class="rv sky" id="v-F">0 Hz</span><span class="rf">Supply to the motor</span><span class="rs" id="s-F">off</span></div>
-        <div class="reg kv" id="r-Ns"><span class="rn">Ns</span><span class="rv" id="v-Ns">0 RPM</span><span class="rf">Field speed, 120 × f / 4</span><span class="rs" id="s-Ns">4 poles</span></div>
-        <div class="reg kv" id="r-S"><span class="rn">SLIP</span><span class="rv" id="v-S">-</span><span class="rf">Ns minus shaft speed</span><span class="rs" id="s-S">-</span></div>
-        <div class="reg kv" id="r-T"><span class="rn">TORQUE</span><span class="rv" id="v-T">0.00 ×</span><span class="rf">Motor torque, × rated</span><span class="rs" id="s-T">load 1.00 ×</span></div>
-        <div class="reg kv" id="r-PF"><span class="rn">PF</span><span class="rv" id="v-PF">-</span><span class="rf">Rotor power factor</span><span class="rs" id="s-PF">-</span></div>
-        <div class="reg kv" id="r-t"><span class="rn">TIME</span><span class="rv" id="v-t">0.00 s</span><span class="rf">Since the last start</span><span class="rs" id="s-t">-</span></div>
+        <section class="safety" aria-labelledby="safeH">
+          <h2 id="safeH">Safety on the real trainer</h2>
+          <ul>
+            <li>The instructor energizes and de-energizes the trainer. You measure and record.</li>
+            <li>Lockout/tagout before any wiring change, including moving the motor leads to the VFD. Verify zero voltage before you touch a terminal.</li>
+            <li>The shaft and coupling guard stays in place. Keep hands, sleeves, and badges away from the shaft and the belt.</li>
+            <li>Clamp the meter around one motor lead only, with the jaw fully closed, and keep your hands behind the guard on the meter.</li>
+          </ul>
+          <label class="ack"><input type="checkbox" id="safeAck"> <span>I have read these rules</span></label>
+        </section>
       </div>
-    </section>
+      <div class="col">
+        <section class="bench" aria-labelledby="benchH">
+          <h2 id="benchH">Bench controls</h2>
+          <div class="seg" role="group" aria-label="Starter">
+            <button type="button" id="modeAtl" aria-pressed="true">Across the line</button>
+            <button type="button" id="modeVfd" aria-pressed="false">VFD</button>
+          </div>
+          <div class="crow">
+            <label>Disconnect (instructor)<button type="button" class="btn" id="btnDisc" aria-pressed="false">Turn on</button></label>
+            <label>Brake load
+              <select id="selLoad">
+                <option value="0">No load</option>
+                <option value="0.25">25 %</option>
+                <option value="0.5">50 %</option>
+                <option value="0.75">75 %</option>
+                <option value="1" selected>100 % (rated)</option>
+              </select>
+            </label>
+            <label>Clamp meter
+              <select id="selMeter">
+                <option value="A">A (live current)</option>
+                <option value="INRUSH">INRUSH (first 100 ms)</option>
+                <option value="MAX">MAX (highest reading)</option>
+              </select>
+            </label>
+          </div>
+          <div class="vrow off" id="vfdRow">
+            <label>VFD set frequency
+              <span class="frq"><input type="range" id="rngF" min="10" max="60" step="1" value="30" aria-label="VFD set frequency in hertz"><output id="outF">30 Hz</output></span>
+              <span class="quick" role="group" aria-label="Quick frequencies"><button type="button" data-f="30">30 Hz</button><button type="button" data-f="45">45 Hz</button><button type="button" data-f="60">60 Hz</button></span>
+            </label>
+            <label>Ramp time
+              <select id="selRamp">
+                <option value="1">1 s</option>
+                <option value="2">2 s</option>
+                <option value="5" selected>5 s</option>
+                <option value="8">8 s</option>
+                <option value="10">10 s</option>
+              </select>
+            </label>
+          </div>
+          <div class="sbtns">
+            <button type="button" class="btn primary" id="btnStart">Start</button>
+            <button type="button" class="btn stop" id="btnStop">Stop</button>
+          </div>
+          <p class="benchmsg" id="benchMsg" role="status">The disconnect is off and locked. Pick the starter, the load, and the meter setting, then press Turn on.</p>
+        </section>
 
-    <section aria-labelledby="stripH">
-      <h2 id="stripH">Strip chart <small>line current, speed, and torque during the start</small></h2>
-      <div class="chartbox"><svg id="strip" viewBox="0 0 480 214" role="img" aria-label="Strip chart of line current, speed, and torque against time since the start"></svg></div>
-      <div class="clegend"><span style="--c:#F0786A"><i></i>line current (A, left)</span><span style="--c:#6FD49B"><i></i>speed (RPM, right)</span><span style="--c:#A9B4FF"><i></i>torque (× rated)</span><span style="--c:#9FE7FF"><i class="dash"></i>FLA 2.4 A</span></div>
-      <p class="chartnote" id="stripNote">No start yet.</p>
-    </section>
+        <section aria-labelledby="metH">
+          <h2 id="metH">Meters <small>what you would read on the trainer</small></h2>
+          <div class="regs m4">
+            <div class="reg kv" id="r-I"><span class="rn">CLAMP</span><span class="rv" id="v-I">0.00 A</span><span class="rf">Clamp meter on L1</span><span class="rs" id="s-I">A, live</span></div>
+            <div class="reg kv" id="r-N"><span class="rn">TACH</span><span class="rv grn" id="v-N">0 RPM</span><span class="rf">Optical tachometer</span><span class="rs" id="s-N">shaft at rest</span></div>
+            <div class="reg kv" id="r-F"><span class="rn">FREQ</span><span class="rv sky" id="v-F">0 Hz</span><span class="rf">Supply to the motor</span><span class="rs" id="s-F">off</span></div>
+            <div class="reg kv" id="r-Ns"><span class="rn">Ns</span><span class="rv" id="v-Ns">0 RPM</span><span class="rf">Field speed, 120 × f / 4</span><span class="rs" id="s-Ns">4 poles</span></div>
+            <div class="reg kv" id="r-S"><span class="rn">SLIP</span><span class="rv" id="v-S">-</span><span class="rf">Ns minus shaft speed</span><span class="rs" id="s-S">-</span></div>
+            <div class="reg kv" id="r-T"><span class="rn">TORQUE</span><span class="rv" id="v-T">0.00 ×</span><span class="rf">Motor torque, × rated</span><span class="rs" id="s-T">load 1.00 ×</span></div>
+            <div class="reg kv" id="r-PF"><span class="rn">PF</span><span class="rv" id="v-PF">-</span><span class="rf">Rotor power factor</span><span class="rs" id="s-PF">-</span></div>
+            <div class="reg kv" id="r-t"><span class="rn">TIME</span><span class="rv" id="v-t">0.00 s</span><span class="rf">Since the last start</span><span class="rs" id="s-t">-</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
 
-    <section aria-labelledby="tscH">
-      <h2 id="tscH">Torque-speed curve <small>slides with the frequency</small></h2>
-      <div class="chartbox"><svg id="tsc" viewBox="0 0 480 224" role="img" aria-label="Torque against speed for the present frequency, with the load line and the operating point"></svg></div>
-      <div class="clegend"><span style="--c:#38B0E0"><i></i>motor torque now</span><span style="--c:#5d68a8"><i class="dash"></i>30, 45, 60 Hz</span><span style="--c:#cdd2e6"><i class="dash"></i>brake load</span><span style="--c:#6FD49B"><i></i>operating point</span></div>
-      <p class="chartnote" id="tscNote">With constant volts per hertz the whole curve keeps its shape and slides with Ns.</p>
-    </section>
+    <div class="span-all charts">
+      <section aria-labelledby="stripH">
+        <h2 id="stripH">Strip chart <small>line current, speed, and torque during the start</small></h2>
+        <div class="chartbox"><svg id="strip" viewBox="0 0 480 214" role="img" aria-label="Strip chart of line current, speed, and torque against time since the start"></svg></div>
+        <div class="clegend"><span style="--c:#F0786A"><i></i>line current (A, left)</span><span style="--c:#6FD49B"><i></i>speed (RPM, right)</span><span style="--c:#A9B4FF"><i></i>torque (× rated)</span><span style="--c:#9FE7FF"><i class="dash"></i>FLA 2.4 A</span></div>
+        <p class="chartnote" id="stripNote">No start yet.</p>
+      </section>
 
-    <section class="wo" aria-labelledby="woH">
+      <section aria-labelledby="tscH">
+        <h2 id="tscH">Torque-speed curve <small>slides with the frequency</small></h2>
+        <div class="chartbox"><svg id="tsc" viewBox="0 0 480 224" role="img" aria-label="Torque against speed for the present frequency, with the load line and the operating point"></svg></div>
+        <div class="clegend"><span style="--c:#38B0E0"><i></i>motor torque now</span><span style="--c:#5d68a8"><i class="dash"></i>30, 45, 60 Hz</span><span style="--c:#cdd2e6"><i class="dash"></i>brake load</span><span style="--c:#6FD49B"><i></i>operating point</span></div>
+        <p class="chartnote" id="tscNote">With constant volts per hertz the whole curve keeps its shape and slides with Ns.</p>
+      </section>
+    </div>
+
+    <section class="wo span-all" aria-labelledby="woH">
       <div class="wo-head">
         <div>
           <p class="eyebrow">Work order BCS-4471</p>
@@ -493,26 +554,26 @@
       </div>
       <p class="quote">"The lights in the packing room dip every morning when CV-2 starts. Measure the start on the trainer, run the motor from the VFD, and tell me which starter to install." CV-2 nameplate: 3-phase, 208 V, 60 Hz, 1725 RPM, 1/2 HP, FLA 2.4 A, 4 poles.</p>
       <ol class="tasks">
-        <li id="t-inrush"><span class="mk" aria-hidden="true"></span><span class="tt">Capture the inrush</span><span class="pt" id="p-inrush">0 / 15</span>
-          <span class="td">Clamp meter on INRUSH, then start across the line. Type the captured peak and how many times FLA it is.</span>
+        <li id="t-inrush"><span class="mk" aria-hidden="true"></span><span class="tt">1. Capture the inrush</span><span class="pt" id="p-inrush">0 / 15</span>
+          <span class="td">Set Clamp meter to INRUSH, then press Start across the line. Type the peak the meter captured, and the peak divided by FLA (2.4 A).</span>
           <div class="body"><div class="fields"><label>Inrush peak (A)<input type="text" inputmode="decimal" id="a-inrush" autocomplete="off"></label><label>Inrush ÷ FLA<input type="text" inputmode="decimal" id="a-ratio" autocomplete="off"></label></div>
             <div class="chkrow"><button type="button" class="btn" data-check="inrush">Check</button></div><div class="fb" id="f-inrush"></div></div></li>
-        <li id="t-run"><span class="mk" aria-hidden="true"></span><span class="tt">Record the settled current</span><span class="pt" id="p-run">0 / 10</span>
-          <span class="td">Across the line at 100 % load, after the speed settles. Meter on A.</span>
+        <li id="t-run"><span class="mk" aria-hidden="true"></span><span class="tt">2. Record the settled current</span><span class="pt" id="p-run">0 / 10</span>
+          <span class="td">Across the line at 100 % load. Wait until TACH says steady, set Clamp meter to A, and type the reading.</span>
           <div class="body"><div class="fields"><label>Running current (A)<input type="text" inputmode="decimal" id="a-atlI" autocomplete="off"></label></div>
             <div class="chkrow"><button type="button" class="btn" data-check="run">Check</button></div><div class="fb" id="f-run"></div></div></li>
-        <li id="t-vmax"><span class="mk" aria-hidden="true"></span><span class="tt">Capture the VFD start current</span><span class="pt" id="p-vmax">0 / 5</span>
-          <span class="td">Meter on MAX, load at 100 %, start the VFD from standstill and let it reach the set frequency.</span>
+        <li id="t-vmax"><span class="mk" aria-hidden="true"></span><span class="tt">3. Capture the VFD start current</span><span class="pt" id="p-vmax">0 / 5</span>
+          <span class="td">Set Clamp meter to MAX and Brake load to 100 %. Start the VFD from standstill and wait until TACH says steady. Type the MAX reading.</span>
           <div class="body"><div class="fields"><label>Highest current, VFD start (A)<input type="text" inputmode="decimal" id="a-vmax" autocomplete="off"></label></div>
             <div class="chkrow"><button type="button" class="btn" data-check="vmax">Check</button></div><div class="fb" id="f-vmax"></div></div></li>
-        <li id="t-speeds"><span class="mk" aria-hidden="true"></span><span class="tt">Run at 30, 45, and 60 Hz and record the speed</span><span class="pt" id="p-speeds">0 / 15</span>
-          <span class="td">VFD, load at 100 %. Wait until the speed settles at each frequency, then read the tachometer.</span></li>
-        <li id="t-calc"><span class="mk" aria-hidden="true"></span><span class="tt">Compute Ns and slip for each speed</span><span class="pt" id="p-calc">0 / 30</span>
+        <li id="t-speeds"><span class="mk" aria-hidden="true"></span><span class="tt">4. Run at 30, 45, and 60 Hz and record the speed</span><span class="pt" id="p-speeds">0 / 15</span>
+          <span class="td">VFD at 100 % load. Press each frequency button in turn and wait until TACH says steady. Type the TACH reading in Speed (RPM) on that frequency's card in task 5. These speeds are checked with task 5.</span></li>
+        <li id="t-calc"><span class="mk" aria-hidden="true"></span><span class="tt">5. Compute Ns and slip for each speed</span><span class="pt" id="p-calc">0 / 30</span>
           <span class="td">Ns = 120 × f / P. Slip speed = Ns - Nr. Percent slip = (Ns - Nr) / Ns × 100. Work from your own speed reading.</span>
           <div class="body"><div class="fcards" id="fcards"></div>
             <div class="chkrow"><button type="button" class="btn" data-check="calc">Check speeds and calculations</button></div><div class="fb" id="f-speeds"></div></div></li>
-        <li id="t-rec"><span class="mk" aria-hidden="true"></span><span class="tt">Recommend a starter</span><span class="pt" id="p-rec">0 / 25</span>
-          <span class="td">Rosa asks: VFD or across the line for CV-2? Choose, then check every reason that is true.</span>
+        <li id="t-rec"><span class="mk" aria-hidden="true"></span><span class="tt">6. Recommend a starter</span><span class="pt" id="p-rec">0 / 25</span>
+          <span class="td">Rosa asks: VFD or across the line for CV-2? Choose one, then tick every reason that is true.</span>
           <div class="body">
             <div class="radios" role="radiogroup" aria-label="Recommendation"><label><input type="radio" name="rec" value="vfd"> Install the VFD</label><label><input type="radio" name="rec" value="atl"> Keep the across-the-line starter</label></div>
             <div class="reasons" id="reasons"></div>
@@ -553,6 +614,11 @@
 "use strict";
 const hasGSAP = typeof window.gsap !== 'undefined';
 const $ = s => document.querySelector(s);
+// guide block: mark the current step (1-based) and say the single next action
+function guide(stepNo, nowHtml) {
+  document.querySelectorAll('#howSteps li').forEach(li => { const n = +li.dataset.h; li.classList.toggle('done', n < stepNo); li.classList.toggle('current', n === stepNo); });
+  if (nowHtml) document.getElementById('nowText').innerHTML = nowHtml;
+}
 // LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
 // Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
 // Returns null when any of them (or WebGL) is missing: then draw the 2D fallback.
@@ -779,11 +845,15 @@ function Lab3D(stage, opts) {
     if (name === 'overview' || !views[name]) {
       // the overview (and FIT) must show the whole board width, also on narrow phone screens,
       // leaving room for the zoom buttons at the right edge
-      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      // and, on wide stages, fill the stage: the board fits both the width and the height of the view, no more, no less
+      const tanV = Math.tan(T.MathUtils.degToRad(camera.fov / 2)), tanH = tanV * camera.aspect;
+      const dist0 = pos.distanceTo(tgt), sinE = Math.max(0.3, (pos.y - tgt.y) / dist0);
       const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
-      f = Math.max(f, need / pos.distanceTo(tgt));
-      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
-      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+      const needD = (B.d / 2 * sinE + 0.8) / (tanV * 0.78) + B.d * 0.25;   // 0.78 leaves room for the HUD bars at the top and bottom
+      f = Math.max(need, needD) / dist0;
+      const need2 = Math.max(need, needD);
+      controls.maxDistance = Math.max(controls.maxDistance, need2 * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need2 * 1.1); scene.fog.far = Math.max(scene.fog.far, need2 * 2.6); }
     }
     pos.sub(tgt).multiplyScalar(f).add(tgt);
     return {pos: pos, tgt: tgt};
@@ -1153,7 +1223,7 @@ const INFO = {
 
 function Graphics3D(stage) {
   const lab = Lab3D(stage, {board: {w: 18.6, d: 10.6, cx: 0, cz: 0, silk: 'CBT TECHNOLOGY INSTITUTE  LSN-MOTORS  MOTOR TRAINER  208 V 3 PH 60 HZ', seed: 33},
-    views: {overview: {pos: [0, 15, 8.5], tgt: [0, 0.4, 0.4], want: 1.5}, drive: {pos: [-2.6, 7.2, 7.6], tgt: [-2.2, 0.4, -1.0], want: 1.2}, motor: {pos: [6.6, 5.6, 6.8], tgt: [5.2, 0.9, -0.4], want: 1.2}}});
+    views: {overview: {pos: [0, 15, 8.5], tgt: [0, 0.4, 0.4], want: 1.5}, drive: {pos: [-2.7, 8.9, 9.75], tgt: [-2.2, 0.4, -1.0], want: 0.96}, motor: {pos: [6.75, 6.78, 8.6], tgt: [5.0, 0.9, -0.4], want: 0.96}}});   // framed for the full-width stage; the same distance as before on narrow screens
   if (!lab) return null;
   const T = lab.T, scene = lab.scene;
   const M = {line: lab.busMat(GOLD), feed: lab.busMat(GOLD), toCont: lab.busMat(GOLD), toVfd: lab.busMat(GOLD), contOut: lab.busMat(GOLD), vfdOut: lab.busMat(SKY), lead: lab.busMat(GOLD)};
@@ -1242,7 +1312,8 @@ function Graphics3D(stage) {
   const api = {
     flow(name, text, color) { return lab.fly(PATHS[name], text, color, name === 'shaft' ? {y: 1.75, dur: 1.0} : {dur: 1.2}); },
     hi: (k, c) => lab.hi(R[k], c), clear: () => lab.clear(), clearPackets: () => lab.clearPackets(), pop: k => lab.pop(R[k]),
-    focus: (x, z) => lab.focusOn(x, z, 8), view: n => lab.setView(n),
+    focus: (x, z) => lab.focusOn(x, z, stage.clientWidth > 1.6 * stage.clientHeight ? 9.5 : 8),   // a little further back on the wide full-width stage
+    view: n => lab.setView(n),
     spin(N, dt) {
       const w = N / 60 * Math.PI * 2 / 15;
       shaftG.rotation.x -= w * dt; tailG.rotation.x -= w * dt * 0.55 / 0.55;
@@ -1505,7 +1576,7 @@ function sync(force) {
 }
 function renderControls() {
   $('#modeAtl').setAttribute('aria-pressed', B.mode === 'atl'); $('#modeVfd').setAttribute('aria-pressed', B.mode === 'vfd');
-  $('#btnDisc').setAttribute('aria-pressed', B.disc); $('#btnDisc').textContent = B.disc ? 'On' : 'Off, locked'; $('#btnDisc').classList.toggle('on', B.disc);
+  $('#btnDisc').setAttribute('aria-pressed', B.disc); $('#btnDisc').textContent = B.disc ? 'Turn off and lock' : 'Turn on'; $('#btnDisc').classList.toggle('on', B.disc);
   $('#selLoad').value = String(B.load); $('#selMeter').value = B.meter; $('#selRamp').value = String(B.ramp);
   $('#rngF').value = B.fset; $('#outF').textContent = B.fset + ' Hz';
   $('#vfdRow').classList.toggle('off', B.mode !== 'vfd');
@@ -1531,12 +1602,12 @@ function checkFlags() {
 
 // ---- bench actions (the manual controls and the procedure steps both use these) ----
 function doStart() {
-  if (!B.disc) { msg('The disconnect is off and locked. On the real trainer the instructor removes the lock and turns it on. Press the Disconnect button first.', true); return false; }
+  if (!B.disc) { msg('The disconnect is off and locked. On the real trainer the instructor removes the lock and turns it on. Press Turn on under Disconnect (instructor) first.', true); return false; }
   if (B.on && !B.stopping) return false;
-  if (B.N > 1 && B.mode === 'atl') { msg('Wait for the shaft to stop before the next across-the-line start.', true); return false; }
+  if (B.N > 1 && B.mode === 'atl') { msg('Wait for the shaft to stop (TACH reads 0 RPM) before the next across-the-line start.', true); return false; }
   if (B.stopping) { B.on = false; B.stopping = false; }
   MOT.start(B); renderControls();
-  if (B.mode === 'atl') msg('Contactor closed: full line voltage on a motor at standstill. Watch the current on the strip chart.');
+  if (B.mode === 'atl') msg('Contactor closed: full line voltage on a motor at standstill. Watch the current on the strip chart below.');
   else msg('VFD start: 0 to ' + B.fset + ' Hz in ' + B.ramp + ' s, constant volts per hertz.');
   flowNow(); return true;
 }
@@ -1550,13 +1621,13 @@ function setDisc(on) {
   B.disc = on;
   if (!on && B.on) { B.on = false; B.stopping = false; B.f = 0; }
   renderControls(); sync(true);
-  msg(on ? 'Disconnect on (the instructor does this on the real trainer). Press Start.' : 'Disconnect off, locked and tagged. It is now safe to change the wiring.');
+  msg(on ? 'Disconnect on (the instructor does this on the real trainer). Press Start.' : 'Disconnect off, locked and tagged. It is now safe to change the wiring: press Across the line or VFD to move the motor leads.');
 }
 function setMode(m) {
   if (m === B.mode) return true;
-  if (B.disc || B.on || B.N > 1) { msg('Lockout first: stop the motor and turn the disconnect off before the motor leads move between the contactor and the VFD.', true); return false; }
+  if (B.disc || B.on || B.N > 1) { msg('Lockout first: press Stop, wait for the shaft to stop, and press Turn off and lock. Then the motor leads can move between the contactor and the VFD.', true); return false; }
   B.mode = m; B.f = 0; renderControls(); sync(true);
-  msg(m === 'vfd' ? 'Motor leads moved to the VFD output T1, T2, T3. Set the frequency and the ramp, then turn on the disconnect.' : 'Motor leads moved back to the contactor. Across-the-line start is ready.');
+  msg(m === 'vfd' ? 'Motor leads moved to the VFD output T1, T2, T3. Set the frequency and the ramp, then press Turn on.' : 'Motor leads moved back to the contactor. Across-the-line start is ready: press Turn on, then Start.');
   return true;
 }
 
@@ -1660,9 +1731,92 @@ function resetAll(keepText) {
   stop(); if (tl) { tl.kill(); tl = null; waitStep = false; }
   S.step = 0; hist = []; B = MOT.fresh(); G && (G.clearPackets(), G.clear(), G.view('overview'));
   renderControls(); sync(true); drawStrip(); drawTsc(); setPhase(null);
-  if (!keepText) { $('#narration').textContent = 'Bench reset: motor stopped, disconnect off and locked, leads on the contactor. Press Step or Play for the guided procedure.'; msg('The disconnect is off and locked. Pick the starter, the load, and the meter setting, then turn on the disconnect.'); }
+  if (!keepText) { $('#narration').textContent = 'Bench reset: motor stopped, disconnect off and locked, leads on the contactor. Press Step or Play for the guided procedure, or follow Do this now above.'; msg('The disconnect is off and locked. Pick the starter, the load, and the meter setting, then press Turn on.'); }
   render();
 }
+
+// ---- "Do this now": the single next action, worked out from the bench and the work order (guide steps 1 to 5; 6 means finished) ----
+const METER_TXT = {A: 'A (live current)', INRUSH: 'INRUSH (first 100 ms)', MAX: 'MAX (highest reading)'};
+let lastChecked = null, lastNow = '';
+const taskVal = id => { const e = document.getElementById('a-' + id); return e ? e.value.trim() : ''; };
+// the next action to get the bench running in this setup, or null when it already runs that way
+function benchTo(mode, meter, f) {
+  if (B.mode !== mode) {
+    if (B.on && !B.stopping) return 'Press <b>Stop</b>. The motor leads move only with the motor stopped.';
+    if (B.disc) return 'Press <b>Turn off and lock</b> under Disconnect (instructor). Lockout comes before the motor leads move.';
+    if (B.N > 1) return 'Wait for the shaft to stop. TACH falls to 0 RPM.';
+    return 'Press <b>' + (mode === 'vfd' ? 'VFD' : 'Across the line') + '</b> at the top of Bench controls. This moves the motor leads.';
+  }
+  if (meter && B.meter !== meter) return B.on && !B.stopping ? 'Press <b>Stop</b>. The clamp meter must be on ' + meter + ' before the start.' : 'Set <b>Clamp meter</b> to <b>' + METER_TXT[meter] + '</b>.';
+  if (B.load !== 1) return 'Set <b>Brake load</b> to <b>100 % (rated)</b>.';
+  if (B.on && !B.stopping) return null;
+  if (mode === 'vfd' && f && B.fset !== f) return 'Press <b>' + f + ' Hz</b> under VFD set frequency.';
+  if (!B.disc) return 'Press <b>Turn on</b> under Disconnect (instructor).';
+  if (mode === 'atl' && B.N > 1) return 'Wait for the shaft to stop. TACH falls to 0 RPM before the next start.';
+  return 'Press <b>Start</b>' + (mode === 'atl' ? ' and watch the current jump on the strip chart below.' : '. The VFD ramps the frequency up over the ramp time.');
+}
+function nowStep() {
+  const fl = ST.flags, R = ST.res, got = id => !!(R[id] && R[id].pts > 0), full = id => !!(R[id] && R[id].pts === MAXES[id]);
+  const wrong = id => R[id] && !full(id) && lastChecked === id;
+  const steady = MOT.settled(B), runningAs = m => B.mode === m && B.on && !B.stopping;
+  if (!ST.safe) return [1, 'Read <b>Safety on the real trainer</b> below and tick <b>I have read these rules</b>.'];
+  // 2: across the line, inrush then running current
+  if (!got('inrush') || wrong('inrush')) {
+    if (!fl.inrush) {
+      if (runningAs('atl') && B.meter === 'INRUSH' && !B.armed) return [2, 'Press <b>Stop</b>. INRUSH only catches a start that begins after it is set.'];
+      return [2, benchTo('atl', 'INRUSH') || 'Watch the strip chart. The clamp meter is catching the inrush.'];
+    }
+    if (wrong('inrush')) return [2, 'Task 1 is not right yet. Read the red note under it, change your answer, and press <b>Check</b> again.'];
+    if (!taskVal('inrush') || !taskVal('ratio')) return [2, 'Type the inrush peak (on the CLAMP meter, or the peak label on the strip chart) in work order task 1. Also type the peak divided by 2.4 A.'];
+    return [2, 'Press <b>Check</b> under task 1.'];
+  }
+  if (!got('run') || wrong('run')) {
+    if (!fl.atlI) return [2, benchTo('atl') || 'Wait until TACH says steady. The motor is still speeding up.'];
+    if (wrong('run')) return [2, 'Task 2 is not right yet. Read the red note under it, change your answer, and press <b>Check</b> again.'];
+    if (!taskVal('atlI')) {
+      if (runningAs('atl') && steady && B.load === 1) return [2, B.meter !== 'A' ? 'Set <b>Clamp meter</b> to <b>A (live current)</b> to read the running current.' : 'Type the CLAMP reading in task 2, Record the settled current.'];
+      return [2, benchTo('atl') || 'Wait until TACH says steady.'];
+    }
+    return [2, 'Press <b>Check</b> under task 2.'];
+  }
+  // 3: VFD start current, then the speeds at 30, 45, and 60 Hz
+  if (!got('vmax') || wrong('vmax')) {
+    if (!fl.vmax) {
+      if (runningAs('vfd') && B.meter === 'MAX' && !(B.maxFromStart && B.fromRest && B.loadSame && B.startLoad === 1)) return [3, 'Press <b>Stop</b>. The MAX reading must cover a whole VFD start from standstill at 100 % load.'];
+      if (B.mode === 'vfd' && (!B.on || B.stopping) && B.N > 1) return [3, 'Wait for the shaft to stop. The VFD start must begin from standstill.'];
+      return [3, benchTo('vfd', 'MAX', 30) || 'Wait until TACH says steady. The clamp meter on MAX keeps the highest current of the start.'];
+    }
+    if (wrong('vmax')) return [3, 'Task 3 is not right yet. Read the red note under it, change your answer, and press <b>Check</b> again.'];
+    if (!taskVal('vmax')) return [3, 'Type the MAX reading from the CLAMP meter in task 3, Capture the VFD start current.'];
+    return [3, 'Press <b>Check</b> under task 3.'];
+  }
+  for (const f of MOT.FREQS) {
+    if (!fl['n' + f]) {
+      if (runningAs('vfd') && B.load === 1) return [3, B.fT !== f ? 'Press <b>' + f + ' Hz</b> under VFD set frequency.' : 'Wait until TACH says steady at ' + f + ' Hz.'];
+      return [3, benchTo('vfd', null, f) || 'Wait until TACH says steady.'];
+    }
+    if (!taskVal('sp' + f)) return [3, runningAs('vfd') && B.fT === f && steady ? 'Type the TACH reading in <b>Speed (RPM)</b> on the ' + f + ' Hz card in task 5.'
+      : 'Type your steady ' + f + ' Hz TACH reading in <b>Speed (RPM)</b> on the ' + f + ' Hz card in task 5. If you did not note it, run the VFD at ' + f + ' Hz again.'];
+  }
+  // 4: calculations
+  if (!(got('calc') && got('speeds')) || (lastChecked === 'calc' && !(full('calc') && full('speeds')))) {
+    if (lastChecked === 'calc' && R.calc && !(full('calc') && full('speeds'))) return [4, 'Some values in task 5 are not right yet. Read the red notes under the cards, fix the values, and press <b>Check speeds and calculations</b> again.'];
+    for (const f of MOT.FREQS) if (!taskVal('ns' + f) || !taskVal('sl' + f) || !taskVal('pc' + f)) return [4, 'On the <b>' + f + ' Hz</b> card in task 5, fill in Ns (RPM), Slip speed (RPM), and Slip (%). Ns = 120 × ' + f + ' / 4.'];
+    return [4, 'Press <b>Check speeds and calculations</b> under the cards in task 5.'];
+  }
+  // 5: recommendation
+  if (!got('rec') || wrong('rec')) {
+    if (wrong('rec')) return [5, 'Task 6 is not right yet. Read the note under it, change your choice or your reasons, and press <b>Check</b> again.'];
+    if (!document.querySelector('input[name=rec]:checked')) return [5, 'In task 6, choose <b>Install the VFD</b> or <b>Keep the across-the-line starter</b>.'];
+    if (!$$('#reasons input:checked').length) return [5, 'In task 6, tick every reason that is true.'];
+    return [5, 'Press <b>Check</b> under task 6.'];
+  }
+  const total = MOT.TASKS.reduce((s, id) => s + (R[id] ? R[id].pts : 0), 0), nf = MOT.TASKS.find(id => !full(id));
+  if (total === 100) return [6, 'Work order complete: <b>100 of 100</b>. When the instructor runs the real trainer, compare your readings with these.'];
+  const n = MOT.TASKS.indexOf(nf) + 1;
+  return [6, 'Work order checked: <b>' + total + ' of 100</b>. To raise your score, fix ' + (nf === 'speeds' || nf === 'calc' ? 'the cards in task 5 and press <b>Check speeds and calculations</b>' : 'task ' + n + ' and press its <b>Check</b> button') + ' again.'];
+}
+function updateNow() { const p = nowStep(), k = p[0] + '|' + p[1]; if (k === lastNow) return; lastNow = k; guide(p[0], p[1]); }
 
 // ---- work order ----
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -1678,6 +1832,7 @@ function buildWO() {
   $$('.wo input[type=text]').forEach(i => { const k = i.id.slice(2); if (ST.ans[k] != null) i.value = ST.ans[k]; });
   $$('input[name=rec]').forEach(r => { r.checked = ST.ans.rec === r.value; });
   $$('#reasons input').forEach(c => { c.checked = (ST.ans.reasons || []).indexOf(c.value) >= 0; });
+  $('#safeAck').checked = !!ST.safe;
 }
 function readAns() {
   $$('.wo input[type=text]').forEach(i => { ST.ans[i.id.slice(2)] = i.value; });
@@ -1707,7 +1862,7 @@ function check(id) {
   readAns();
   if (id === 'calc') { ST.res.speeds = MOT.checkTask('speeds', ST.flags, ST.ans); ST.res.calc = MOT.checkTask('calc', ST.flags, ST.ans); }
   else ST.res[id] = MOT.checkTask(id, ST.flags, ST.ans);
-  save(); renderScore();
+  lastChecked = id; save(); renderScore(); updateNow();
 }
 
 // ---- wiring ----
@@ -1735,12 +1890,14 @@ $$('.quick button').forEach(b => b.addEventListener('click', () => setF(+b.datas
 $('#btnStart').addEventListener('click', doStart);
 $('#btnStop').addEventListener('click', doStop);
 $$('[data-check]').forEach(b => b.addEventListener('click', () => check(b.dataset.check)));
-$('.wo').addEventListener('change', () => { readAns(); save(); });
+$('.wo').addEventListener('change', () => { readAns(); save(); updateNow(); });
+$('.wo').addEventListener('input', () => { updateNow(); });
+$('#safeAck').addEventListener('change', e => { ST.safe = e.target.checked; save(); updateNow(); });
 let resetArm = 0;
 $('#btnResetLab').addEventListener('click', () => {
   if (Date.now() - resetArm > 4000) { resetArm = Date.now(); $('#btnResetLab').textContent = 'Press again to clear everything'; setTimeout(() => { $('#btnResetLab').textContent = 'Clear the work order'; }, 4000); return; }
   resetArm = 0; $('#btnResetLab').textContent = 'Clear the work order';
-  ST = freshST(); save(); buildWO(); renderScore();
+  ST = freshST(); lastChecked = null; save(); buildWO(); renderScore(); updateNow();
 });
 document.addEventListener('keydown', e => {
   const t = e.target && e.target.tagName; if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA' || t === 'BUTTON') return;
@@ -1755,7 +1912,7 @@ function frame(now) {
   if (G) G.spin(B.N, dt * speed);
   noisy(now);
   if (now - lastUI > 120) {
-    lastUI = now; sync(); renderControls();
+    lastUI = now; sync(); renderControls(); updateNow();
     if (chartDirty) { drawStrip(); drawTsc(); chartDirty = B.on || B.N > 0; }
     if (B.on && now - lastFlow > 1800) flowNow();
   }
@@ -1763,7 +1920,7 @@ function frame(now) {
 }
 // a test hook: run the bench forward in bench seconds, or until it settles
 window.__bench = {get: () => B, advance: s => { MOT.advance(B, s); checkFlags(); }, settle: () => { MOT.settle(B); checkFlags(); }, flags: () => ST.flags};
-buildWO(); renderScore(); renderControls(); sync(true); drawStrip(); drawTsc(); render();
+buildWO(); renderScore(); renderControls(); sync(true); drawStrip(); drawTsc(); render(); updateNow();
 requestAnimationFrame(frame);
 })();
 </script>
