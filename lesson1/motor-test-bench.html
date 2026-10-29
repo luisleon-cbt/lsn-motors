@@ -218,7 +218,12 @@
   .reveal{animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*80ms)}
   @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
   @media(max-width:860px){
-    .app .stage .zoomctl{top:56px;right:10px;transform:none;flex-direction:row}
+    .app .stage .zoomctl{top:50%;right:8px;transform:translateY(-50%);flex-direction:column;padding:3px}
+    .app .stage .zoomctl>button{width:30px!important;height:28px!important;font-size:16px}
+    .app .stage .zoomctl>button.fit{height:24px!important;font-size:9px}
+    .app .stage .zoomctl .pad{grid-template-columns:repeat(3,22px)!important;grid-template-rows:repeat(3,22px)!important;margin:2px 0;padding-top:3px}
+    .app .stage .zoomctl .pad button{width:22px!important;height:22px!important;font-size:10px}
+    .app .stage .zoomctl{align-items:center}
     .app{grid-template-columns:1fr;height:auto}
     .app .stage{height:62vh;min-height:360px}
     .panel{border-left:0;border-top:1px solid var(--line);overflow:visible}
@@ -469,7 +474,8 @@ const $ = s => document.querySelector(s);
 // lab.busMat(color, {base, rest})  lab.trace([{x,z}...], lines, mat)  lab.glowBus(mat)
 // lab.fly([{x,z}...], text, color, {y, dur}) -> GSAP timeline (packet sphere + halo + pill label)
 // lab.hi(rec, color)  lab.clear()  lab.pop(rec)  lab.setView(name)  lab.zoom(factor)  lab.intro()  lab.onPick(fn)  lab.clearPackets()
-// Zoom buttons (+, -, FIT) and the + - 0 keys are added to the stage automatically (opts.zoomUI: false turns them off; opts.fitView picks the FIT view).
+// Zoom buttons (+, -, FIT), a pan pad (arrows), the + - 0 keys, and the arrow keys (while the pointer is over the board) are added to the stage automatically
+// (opts.zoomUI: false turns them off; opts.fitView picks the FIT view). Right-drag, Shift or Ctrl plus drag, or two fingers also pan. lab.pan(dx, dz) moves the view.
 function Lab3D(stage, opts) {
   opts = opts || {};
   const hasG = typeof window.gsap !== 'undefined';
@@ -506,6 +512,8 @@ function Lab3D(stage, opts) {
   controls.enableDamping = true; controls.dampingFactor = 0.08;
   controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 5; controls.maxDistance = 42;
   controls.zoomSpeed = 1.1;
+  // pan: right-drag, Ctrl or Shift plus drag, or two fingers; stays on the board plane
+  controls.enablePan = true; controls.screenSpacePanning = false; controls.panSpeed = 0.9;
   // keep the mouse wheel inside the 3D view: zoom the board, do not scroll the page
   stage.addEventListener('wheel', e => e.preventDefault(), {passive: false});
 
@@ -714,28 +722,57 @@ function Lab3D(stage, opts) {
     const p = t.clone().add(off), k = 1 / (gsap.globalTimeline.timeScale() || 1);
     gsap.to(camera.position, {x: p.x, y: p.y, z: p.z, duration: RM ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'}).timeScale(k);
   }
+  // pan buttons (arrows) and arrow keys: slide the view across the board, in screen directions
+  const PANLIM = {x: B.w / 2 + 1.5, z: B.d / 2 + 1.5};
+  function clampTarget(v) { v.x = Math.max(-PANLIM.x, Math.min(PANLIM.x, v.x)); v.z = Math.max(-PANLIM.z + (B.cz || 0), Math.min(PANLIM.z + (B.cz || 0), v.z)); return v; }
+  function pan(dx, dz) {   // dx: +1 right, -1 left; dz: +1 up (away), -1 down (toward the viewer)
+    const off = camera.position.clone().sub(controls.target), dist = off.length(), step = Math.max(0.6, dist * 0.12);
+    const fwd = new T.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0;
+    if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
+    const right = new T.Vector3(-fwd.z, 0, fwd.x);
+    const tgt = clampTarget(controls.target.clone().add(right.multiplyScalar(dx * step)).add(fwd.multiplyScalar(dz * step)));
+    const pos = tgt.clone().add(off), k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(controls.target, {x: tgt.x, y: tgt.y, z: tgt.z, duration: RM ? 0 : 0.35, ease: 'power2.out', overwrite: 'auto'}).timeScale(k);
+    gsap.to(camera.position, {x: pos.x, y: pos.y, z: pos.z, duration: RM ? 0 : 0.35, ease: 'power2.out', overwrite: 'auto'}).timeScale(k);
+  }
+  controls.addEventListener('change', () => { const c = controls.target, x = c.x, z = c.z; clampTarget(c); if (c.x !== x || c.z !== z) camera.position.add(new T.Vector3(c.x - x, 0, c.z - z)); });
   if (opts.zoomUI !== false) {
     if (!document.getElementById('lab3d-zoom-css')) {
       const st = document.createElement('style'); st.id = 'lab3d-zoom-css';
       st.textContent = '.zoomctl{position:absolute;z-index:4;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;padding:4px;background:' + P.uiBg + ';border:1px solid ' + P.uiLine + ';border-radius:6px;backdrop-filter:blur(6px)}' +
         '.zoomctl button{width:38px;height:34px;border:0;border-radius:4px;background:transparent;color:' + P.uiText + ';font:600 18px/1 ' + P.font + ';cursor:pointer;padding:0}' +
         '.zoomctl button.fit{font-size:10px;letter-spacing:.06em;height:28px}.zoomctl button:hover{background:' + P.uiHover + ';color:' + P.uiAccent + '}' +
-        '.zoomctl button:focus-visible{outline:2px solid ' + P.uiAccent + ';outline-offset:1px}@media(max-width:520px){.zoomctl{right:10px}.zoomctl button{width:34px;height:32px}}';
+        '.zoomctl button:focus-visible{outline:2px solid ' + P.uiAccent + ';outline-offset:1px}' +
+        '.zoomctl .pad{display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,24px);gap:1px;margin:3px 0;padding-top:4px;border-top:1px solid ' + P.uiLine + '}' +
+        '.zoomctl .pad button{width:26px;height:24px;font-size:12px}.zoomctl .pad .u{grid-area:1/2}.zoomctl .pad .l{grid-area:2/1}.zoomctl .pad .c{grid-area:2/2;font-size:9px}.zoomctl .pad .r{grid-area:2/3}.zoomctl .pad .d{grid-area:3/2}' +
+        '@media(max-width:520px){.zoomctl{right:10px}.zoomctl button{width:34px;height:32px}.zoomctl .pad{grid-template-columns:repeat(3,28px);grid-template-rows:repeat(3,26px)}.zoomctl .pad button{width:28px;height:26px}}';
       document.head.appendChild(st);
     }
     const box = document.createElement('div'); box.className = 'zoomctl'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Zoom');
     box.innerHTML = '<button type="button" data-z="in" aria-label="Zoom in" title="Zoom in (+)">+</button>' +
       '<button type="button" data-z="out" aria-label="Zoom out" title="Zoom out (-)">&minus;</button>' +
+      '<div class="pad" role="group" aria-label="Move the view">' +
+      '<button type="button" class="u" data-p="u" aria-label="Move the view up" title="Move up (arrow up)">&#9650;</button>' +
+      '<button type="button" class="l" data-p="l" aria-label="Move the view left" title="Move left (arrow left)">&#9664;</button>' +
+      '<button type="button" class="c" data-z="fit" aria-label="Center the board" title="Center the board (0)">&#9679;</button>' +
+      '<button type="button" class="r" data-p="r" aria-label="Move the view right" title="Move right (arrow right)">&#9654;</button>' +
+      '<button type="button" class="d" data-p="d" aria-label="Move the view down" title="Move down (arrow down)">&#9660;</button></div>' +
       '<button type="button" class="fit" data-z="fit" aria-label="Show the whole board" title="Show the whole board (0)">FIT</button>';
     stage.appendChild(box);
     ['pointerdown', 'pointerup', 'wheel', 'click'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation()));
     box.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.z === 'in') zoom(0.75); else if (b.dataset.z === 'out') zoom(1.33); else setView(opts.fitView || 'overview');
+      const pd = {l: [-1, 0], r: [1, 0], u: [0, 1], d: [0, -1]}[b.dataset.p];
+      if (pd) pan(pd[0], pd[1]);
+      else if (b.dataset.z === 'in') zoom(0.75); else if (b.dataset.z === 'out') zoom(1.33); else setView(opts.fitView || 'overview');
     });
+    let over = false;
+    stage.addEventListener('pointerenter', () => { over = true; }); stage.addEventListener('pointerleave', () => { over = false; });
     document.addEventListener('keydown', e => {
       const t = e.target, tag = t && t.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+      const ak = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1]}[e.key];
+      if (ak) { if (over || stage.contains(t)) { e.preventDefault(); pan(ak[0], ak[1]); } return; }
       if (e.key === '+' || e.key === '=') zoom(0.75);
       else if (e.key === '-' || e.key === '_') zoom(1.33);
       else if (e.key === '0') setView(opts.fitView || 'overview');
@@ -765,7 +802,7 @@ function Lab3D(stage, opts) {
 
   const labApi = {T: T, scene: scene, camera: camera, controls: controls, renderer: renderer, recs: recs,
     chip: chip, finishPins: finishPins, silkRect: silkRect, zone: zone, label: label, busMat: busMat, trace: trace, glowBus: glowBus,
-    fly: fly, clearPackets: clearPackets, hi: hi, clear: clear, pop: pop, setView: setView, focusOn: focusOn, intro: intro, zoom: zoom,
+    fly: fly, clearPackets: clearPackets, hi: hi, clear: clear, pop: pop, setView: setView, focusOn: focusOn, intro: intro, zoom: zoom, pan: pan,
     onPick: cb => { pickCb = cb; }, unit: unit};
   (window.__labs = window.__labs || []).push(labApi);   // lets tests reach the camera
   return labApi;
