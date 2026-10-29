@@ -1,0 +1,1477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotating field lab</title>
+<meta name="description" content="LSN-MOTORS Lesson 1 interactive: Run a three-phase motor from standstill to full speed and watch slip, rotor voltage, rotor frequency, current, power factor, and torque change.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Figtree:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<style>
+  /* ===== CBT "Shield bench" theme v1 (quality reference: templates/theme/reference/tiny-machine-lab.html). Paste as the first block of every page's <style>. ===== */
+  :root{
+    /* CBT brand */
+    --cbt-navy:#283068; --cbt-sky:#38B0E0; --cbt-gold:#E0B840; --cbt-gray:#989890; --cbt-navy-dark:#1B2150;
+    /* dark bench (navy board, gold traces) */
+    --board:#141a45; --board-deep:#0b0f2b; --panel:#10163b; --panel-2:#171f4f; --line:#2a3470; --line-2:#3a4690;
+    --silk:#eef1fa; --silk-dim:#aeb3c9; --copper:#E0B840;
+    /* signal colors: each course plan says what they mean; defaults below */
+    --addr:#E0B840; --data:#38B0E0; --ctrl:#F0786A; --alu:#6FD49B; --oper:#A9B4FF; --out:#9FE7FF; --led:#6FD49B;
+    --ok:#6FD49B; --bad:#F0786A; --warn:#E0B840; --neon:#39ff14;
+    --font-mono:"Red Hat Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --font-body:"Figtree","Helvetica Neue",Arial,sans-serif;
+    --font-display:"Archivo","Arial Black",Arial,sans-serif;
+    --mono:var(--font-mono); --sans:var(--font-body); --display:var(--font-display);
+    --r:6px; --lab:10px;
+    /* legacy names, mapped to the dark theme */
+    --ink:#eef1fa; --ink-2:#cdd2e6; --muted:#aeb3c9; --bg:#0b0f2b; --card:#10163b; --edge:#2a3470; --edge-2:#3a4690; --dim:#aeb3c9; --silk-2:#cdd2e6;
+    --code-bg:#070a22; --code-ink:#9FE7FF;
+    --net-blue:#38B0E0; --net-green:#6FD49B; --net-amber:#E0B840; --net-purple:#A9B4FF; --net-teal:#5fe0c8;
+    --ok-soft:rgba(111,212,155,.10); --bad-soft:rgba(240,120,106,.10); --warn-soft:rgba(224,184,64,.10);
+    --radius:6px; --shadow:none;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  html{background:var(--board-deep)}
+  [hidden]{display:none!important}
+  body{color:var(--silk);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+    background:radial-gradient(1200px 600px at 30% -10%,#1d2a6e 0%,transparent 60%),var(--board-deep)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(135deg,rgba(224,184,64,.035) 0 2px,transparent 2px 26px);-webkit-mask:radial-gradient(900px 600px at 100% 100%,#000,transparent 70%);mask:radial-gradient(900px 600px at 100% 100%,#000,transparent 70%)}
+  button,input,select,textarea{font:inherit;color:inherit}
+  a{color:var(--data)}
+  :focus-visible{outline:2px solid var(--addr);outline-offset:2px}
+  /* brand bar: white, CBT logo (shield and wordmark), navy rule with a gold underline like the shield */
+  .topbar{position:relative;z-index:5;background:#fff;border-bottom:4px solid var(--cbt-navy);box-shadow:0 3px 0 var(--cbt-gold)}
+  .topbar-inner{max-width:none;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand-logo{display:block;flex:none;height:40px}
+  .brand-logo img{height:40px;width:auto;display:block}
+  .crumb{font-size:13px;color:#5d6178;letter-spacing:.02em;border-left:1px solid #DADDEA;padding-left:16px}
+  .crumb b{color:var(--cbt-navy);font-weight:700}
+  .crumb a{color:var(--cbt-navy)}
+  /* page mode (challenges and pages with a scrolling layout) */
+  main,.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:26px 16px 36px}
+  .hero{margin:0 0 20px}
+  .eyebrow{display:block;margin:0;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);background:none;padding:0}
+  h1{margin:6px 0 8px;font-family:var(--font-display);font-weight:800;font-stretch:118%;font-size:clamp(24px,3.4vw,36px);line-height:1.15;letter-spacing:-.01em;text-wrap:balance;color:var(--silk)}
+  h1 .num{color:var(--cbt-gold)}
+  h2{margin:0 0 10px;font-family:var(--font-display);font-weight:700;font-stretch:110%;font-size:14px;letter-spacing:.02em;color:var(--silk)}
+  h2 small,h3 small{color:var(--silk-dim);font-weight:400}
+  h3{margin:0 0 8px;font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.02em;color:var(--silk)}
+  .lede{margin:0;color:var(--silk-dim);font-size:15px;max-width:68ch}
+  .muted{color:var(--silk-dim)}
+  .spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .spec div{background:var(--panel);padding:9px 11px}
+  .spec b{display:block;font:600 15px var(--font-mono);color:var(--silk)}
+  .spec span{font-size:12px;color:var(--silk-dim)}
+  @media(min-width:960px){.hero.split{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:end}}
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;color:var(--silk);
+    background-image:radial-gradient(rgba(238,241,250,.035) 1px,transparent 1px);background-size:14px 14px}
+  .card[data-ref]::after{content:attr(data-ref);position:absolute;top:9px;right:12px;font:500 9.5px var(--font-mono);letter-spacing:.12em;color:rgba(174,179,201,.55)}
+  .grid{display:grid;gap:14px}
+  .grid>*{min-width:0}
+  @media(min-width:900px){.grid.two{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}}
+  details,details.howto{border:1px solid var(--line);border-radius:5px;background:var(--panel)}
+  details.howto{margin:0 0 16px}
+  summary{cursor:pointer;padding:10px 12px;font:500 12.5px var(--font-mono);color:var(--silk)}
+  details>*:not(summary){margin-left:12px;margin-right:12px}
+  details.howto ol,details.howto ul{margin:4px 12px 12px;padding-left:20px;color:var(--silk-dim)}
+  details.howto li{margin-bottom:5px}
+  details.howto li::marker{color:var(--copper)}
+  .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:5px;padding:9px 12px;font:500 12px var(--font-mono);color:var(--silk);cursor:pointer;transition:border-color .2s,background .2s;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+  .btn:hover:not(:disabled){border-color:var(--copper)}
+  .btn.primary,.btn.go{background:var(--copper);border-color:var(--copper);color:#1a1205;font-weight:600}
+  .btn.primary:hover:not(:disabled),.btn.go:hover:not(:disabled){background:#ecc85c}
+  .btn[aria-pressed="true"],.btn.on{border-color:var(--data);color:var(--data)}
+  .btn:disabled,.btn[disabled]{opacity:.4;cursor:not-allowed}
+  input[type=text],input[type=number],select,textarea{background:var(--board-deep);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font:500 13.5px var(--font-mono);color:var(--silk);min-width:0}
+  input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--copper)}
+  .mono,code,kbd{font-family:var(--font-mono);font-size:.92em}
+  code{background:rgba(238,241,250,.07);padding:1px 5px;border-radius:3px}
+  .cli{background:var(--code-bg);color:var(--code-ink);font:500 12.5px/1.6 var(--font-mono);border-radius:5px;padding:12px 14px;overflow:auto;white-space:pre;border:1px solid var(--line)}
+  .pill{display:inline-block;font:500 10.5px var(--font-mono);letter-spacing:.06em;padding:3px 8px;border-radius:3px;background:var(--panel-2);color:var(--silk-dim);border:1px solid var(--line)}
+  .feedback{border-radius:5px;padding:11px 13px;margin-top:12px;font-size:14.5px;color:var(--silk)}
+  .feedback.ok{background:rgba(111,212,155,.08);border:1px solid rgba(111,212,155,.45)}
+  .feedback.bad{background:rgba(240,120,106,.08);border:1px solid rgba(240,120,106,.45)}
+  .feedback.info{background:rgba(56,176,224,.08);border:1px solid rgba(56,176,224,.45)}
+  .score{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font:500 12px var(--font-mono);color:var(--silk-dim)}
+  .score .big{font:800 36px/1 var(--font-display);font-stretch:118%;color:var(--silk);font-variant-numeric:tabular-nums}
+  table,table.data{border-collapse:collapse;width:100%;font:500 12px var(--font-mono);font-variant-numeric:tabular-nums}
+  th,table.data th{font-weight:500;color:var(--silk-dim);text-align:left;font-size:10.5px;letter-spacing:.04em;padding:7px 8px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+  td,table.data td{padding:4px 8px;border-bottom:1px solid rgba(42,52,112,.55)}
+  .scroll-x,.memwrap{overflow-x:auto}
+  .memwrap{border:1px solid var(--line);border-radius:5px}
+  svg text{font-family:var(--font-mono)}
+  /* step-by-step explanation (page mode and app mode) */
+  .stepper{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .caption,.narr{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:13px 15px;color:var(--silk)}
+  .caption{margin-top:12px;min-height:4.4em}
+  .caption .t{font:500 11px var(--font-mono);letter-spacing:.1em;color:var(--cap,var(--copper));margin-bottom:6px;text-transform:uppercase}
+  .narr{display:flex;flex-direction:column;gap:8px}
+  .narr-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:400 11px var(--font-mono);color:var(--silk-dim)}
+  .ptag{display:inline-flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.1em;color:var(--silk)}
+  .ptag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pc,var(--silk-dim));box-shadow:0 0 8px var(--pc,transparent)}
+  .narr p{margin:0;font-size:15.5px;line-height:1.55;min-height:4.6em}
+  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .controls .btn{padding:10px 6px}
+  .speed{display:flex;align-items:center;gap:12px;font:400 11.5px var(--font-mono);color:var(--silk-dim)}
+  .speed input{flex:1;min-width:0}
+  .speed output{color:var(--silk);width:3.5em;text-align:right;font-variant-numeric:tabular-nums}
+  .hint{margin:0;font-size:12px;color:var(--silk-dim)}
+  .rail{display:flex;gap:2px;margin:4px 0 12px;padding:4px;list-style:none;background:rgba(11,15,43,.78);border:1px solid var(--line);border-radius:6px}
+  .rail>div,.rail>li{flex:1;text-align:center;font:500 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:4px;color:var(--silk-dim);transition:background .25s,color .25s}
+  .rail>div small{display:block;font:400 9.5px var(--font-body);letter-spacing:.02em;text-transform:none;margin-top:2px;opacity:.85}
+  .rail>.on{background:var(--c,var(--copper));color:#1a1205}
+  .rail>.done{color:var(--c,var(--copper))}
+  /* live state */
+  .regs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .reg{border:1px solid var(--line);border-radius:5px;padding:9px 11px;transition:border-color .3s,background .3s;min-width:0}
+  .reg.kv{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:baseline}
+  .reg.on,.reg.flash{border-color:var(--hc,var(--copper));background:rgba(224,184,64,.08)}
+  .reg .rn{font:600 12px var(--font-mono)}
+  .reg .rv{font:600 17px var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+  .reg .rf{font-size:11.5px;color:var(--silk-dim)}
+  .reg .rs{font:400 10.5px var(--font-mono);color:var(--silk-dim);text-align:right;font-variant-numeric:tabular-nums}
+  .reg.wide{grid-column:1/-1}
+  .reg .n{display:flex;justify-content:space-between;align-items:baseline;font:600 12px var(--font-mono);color:var(--silk)}
+  .reg .n b{font:600 17px var(--font-mono);font-variant-numeric:tabular-nums}
+  .bits{grid-column:1/-1;display:grid;grid-template-columns:repeat(var(--nb,8),1fr);gap:4px;margin-top:8px}
+  .bit{display:flex;flex-direction:column;align-items:center;gap:3px;font:400 9.5px var(--font-mono);color:var(--silk-dim)}
+  .bit i{width:100%;height:16px;border-radius:2px;background:#1a2350;border:1px solid var(--line);transition:background .25s,box-shadow .25s}
+  .bit.one i{background:var(--led);border-color:var(--led);box-shadow:0 0 8px rgba(111,212,155,.55)}
+  .ledbits{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}
+  .ledbits i{width:16px;height:16px;border-radius:2px;background:#1a2350;border:1px solid var(--line);font:600 9px/14px var(--font-mono);font-style:normal;color:#4a5490;text-align:center}
+  .ledbits i.on{background:var(--led);border-color:var(--led);color:#06220f;box-shadow:0 0 8px rgba(111,212,155,.55)}
+  .tape{display:flex;flex-wrap:wrap;gap:4px;min-height:34px;align-content:flex-start}
+  .tape span{font:600 13px var(--font-mono);color:var(--out);background:#0f1c44;border:1px solid #2a4a7a;border-radius:3px;padding:3px 7px;font-variant-numeric:tabular-nums}
+  .tape em{font-style:normal;font-size:12px;color:var(--silk-dim)}
+  .notice{margin:0;padding-left:18px;color:var(--silk-dim);font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+  .notice li::marker{color:var(--copper)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 10.5px var(--font-mono);color:var(--silk-dim);letter-spacing:.04em}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:16px;height:3px;border-radius:2px;background:var(--c);box-shadow:0 0 8px var(--c)}
+  /* app mode: the 3D board fills the left, a control rail sits on the right (stacks under the board on phones) */
+  .app{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,410px);height:calc(100vh - 55px);min-height:560px}
+  .stage{position:relative;min-width:0;min-height:320px;overflow:hidden;background:radial-gradient(ellipse at 40% 38%,#1d2a6e 0%,var(--board-deep) 72%);touch-action:none}
+  .stage .gl{position:absolute;inset:0;display:block;z-index:1}
+  .stage .labels{position:absolute!important;top:0;left:0;z-index:2}
+  .stage .flat{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .nogl{position:absolute;left:0;right:0;top:0;padding:7px 12px;text-align:center;color:var(--silk-dim);font-size:12px;z-index:4;background:rgba(11,15,43,.9);border-bottom:1px solid var(--line)}
+  .stage:has(.nogl:not([hidden])) .hud-top{top:44px}
+  .stage:has(.nogl:not([hidden])) .flat{top:34px;height:calc(100% - 34px)}
+  .hud{position:absolute;z-index:3;pointer-events:none;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hud button,.hud a{pointer-events:auto}
+  .hud-top{top:14px;left:16px;right:16px}
+  .hud-bottom{bottom:14px;left:16px;right:16px;justify-content:space-between;align-items:flex-end}
+  .hud .phases,.hud .ticks,.hud .legend,.hud .views{background:rgba(11,15,43,.78);border:1px solid var(--line);border-radius:6px;backdrop-filter:blur(6px)}
+  .phases{list-style:none;margin:0;padding:4px;display:flex;gap:2px}
+  .phases li{font:500 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:4px;color:var(--silk-dim);transition:background .25s,color .25s}
+  .phases li.on{background:var(--c,var(--copper));color:#1a1205}
+  .ticks{font:400 11px var(--font-mono);color:var(--silk-dim);padding:9px 10px;font-variant-numeric:tabular-nums}
+  .ticks b{color:var(--silk);font-weight:600}
+  .hud .legend{padding:8px 12px}
+  .views{display:flex;gap:2px;padding:4px}
+  .views button{border:0;background:transparent;font:400 11px var(--font-mono);padding:6px 10px;border-radius:4px;color:var(--silk-dim);cursor:pointer}
+  .views button:hover{color:var(--silk)}
+  .views button.on{background:var(--panel-2);color:var(--silk)}
+  .credit{flex-basis:100%;margin:2px 0 0 2px;font:600 14px var(--font-mono);letter-spacing:.08em;color:var(--neon);text-shadow:0 0 4px var(--neon),0 0 12px rgba(57,255,20,.75),0 0 26px rgba(57,255,20,.45)}
+  .tag,.stage3d .label3d{pointer-events:none;display:flex;flex-direction:column;align-items:center;font-family:var(--font-mono);line-height:1.1;text-align:center;color:var(--silk);text-shadow:0 1px 2px rgba(0,0,0,.8)}
+  .tag .nm{font-size:calc(var(--lab) * .85);letter-spacing:.1em;color:var(--silk-dim)}
+  .tag .vl{font-size:calc(var(--lab) * 1.3);font-weight:600;font-variant-numeric:tabular-nums}
+  .tag .sb{font-size:calc(var(--lab) * .72);color:var(--silk-dim);letter-spacing:.04em}
+  .tag .sb:empty{display:none}
+  .tag.on .nm{color:var(--silk)}
+  .tag.on .vl{color:#fff6d8}
+  .cell .nm{font-size:calc(var(--lab) * .75)}
+  .cell .vl{font-size:calc(var(--lab) * 1.15)}
+  .zone{pointer-events:none;font-family:var(--font-mono);font-size:calc(var(--lab) * .82);letter-spacing:.14em;text-transform:uppercase;color:var(--c,var(--silk-dim));opacity:.85;white-space:nowrap;text-align:center;line-height:1.3}
+  .lcd{pointer-events:none;font-family:var(--font-mono);font-weight:600;color:var(--out);font-size:calc(var(--lab) * 2);text-shadow:0 0 10px rgba(111,212,155,.8);font-variant-numeric:tabular-nums}
+  .pkt{pointer-events:none;font-family:var(--font-mono);font-size:calc(var(--lab) * 1.1);font-weight:700;color:#06120f;background:var(--c);padding:2px 6px;border-radius:3px;box-shadow:0 0 14px var(--c);white-space:nowrap}
+  .panel{min-width:0;overflow-y:auto;background:var(--panel);border-left:1px solid var(--line);padding:20px 18px 28px;display:flex;flex-direction:column;gap:22px;
+    background-image:radial-gradient(rgba(238,241,250,.035) 1px,transparent 1px);background-size:14px 14px}
+  .panel h1{font-size:26px;margin:4px 0 6px}
+  /* a Lab3D stage inside a card (page mode challenges) */
+  .card .stage{width:100%;aspect-ratio:16/10;min-height:0;border-radius:6px;border:1px solid var(--line)}
+  @media(max-width:640px){.card .stage{aspect-ratio:4/3}}
+  .progress{display:flex;gap:3px;margin:10px 0}
+  .progress i{flex:1;height:6px;border-radius:2px;background:var(--line)}
+  .progress i.ok{background:var(--ok)}.progress i.part{background:var(--warn)}.progress i.bad{background:var(--bad)}.progress i.now{background:var(--cbt-sky)}
+  .opts{display:grid;gap:8px;margin-top:10px}
+  .opts button{text-align:left;padding:11px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);color:var(--silk);font:500 14.5px var(--font-body);cursor:pointer}
+  .opts button:hover:not(:disabled){border-color:var(--cbt-gold)}
+  .opts button.right{border-color:var(--ok);background:rgba(111,212,155,.10)}
+  .opts button.wrong{border-color:var(--bad);background:rgba(240,120,106,.10)}
+  /* the older make3D stage (page mode) */
+  .stage3d{position:relative;width:100%;aspect-ratio:16/10;min-height:280px;border-radius:6px;overflow:hidden;touch-action:none;background:radial-gradient(ellipse at 40% 38%,#1d2a6e 0%,var(--board-deep) 72%);border:1px solid var(--line)}
+  @media(max-width:640px){.stage3d{aspect-ratio:4/3}}
+  .stage3d canvas{position:absolute;inset:0;display:block;width:100%!important;height:100%!important}
+  .stage3d .fallback{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;font-size:12px;color:var(--silk-dim);background:rgba(11,15,43,.85);text-align:center}
+  .stage3d .label3d{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-weight:600}
+  .stage3d .label3d.pkt{color:#06120f;text-shadow:none;background:var(--c,currentColor);padding:2px 6px;border-radius:3px}
+  footer.foot{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:16px;color:var(--silk-dim);font-size:12.5px;border-top:1px solid var(--line)}
+  footer.foot .byline,.byline{margin-top:4px;font:600 13px var(--font-mono)!important;letter-spacing:.08em;color:var(--neon)!important;text-shadow:0 0 4px var(--neon),0 0 12px rgba(57,255,20,.6)}
+  .reveal{animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*80ms)}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media(max-width:860px){
+    .app .stage .zoomctl{top:56px;right:10px;transform:none;flex-direction:row}
+    .app{grid-template-columns:1fr;height:auto}
+    .app .stage{height:62vh;min-height:360px}
+    .panel{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  }
+  @media(max-width:520px){
+    .hud .legend{font-size:9.5px;gap:3px 10px}
+    .phases li{padding:5px 7px;font-size:10px}
+    .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* ===== end of theme ===== */
+
+  /* page-specific CSS below (app mode explorer). Keep the middle right of the stage free for the zoom buttons. */
+  .setup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .setup .full{grid-column:1/-1}
+  .fld{min-width:0}
+  .fld label,.fld .lbl{display:block;font:500 11px var(--font-mono);color:var(--silk-dim);margin-bottom:5px;letter-spacing:.04em}
+  .fld select{width:100%}
+  .slider{display:flex;align-items:center;gap:10px}
+  .slider input{flex:1;min-width:0}
+  .slider output{font:600 13px var(--font-mono);min-width:5.6em;text-align:right;font-variant-numeric:tabular-nums}
+  .act{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .act .btn{padding:9px 6px;font-size:11.5px}
+  .formula{font:500 12.5px/1.5 var(--font-mono);color:var(--silk);background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;overflow-wrap:anywhere}
+  .formula b{color:var(--cbt-gold);font-weight:600}
+  .formula small{display:block;font:400 11.5px/1.4 var(--font-body);color:var(--silk-dim);margin-top:3px}
+  .note{font-size:12.5px;color:var(--silk-dim);margin:6px 0 0;line-height:1.45}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .sec-head h2{margin:0}
+  .sec-head small{font:400 11px var(--font-mono);color:var(--silk-dim)}
+  .statep{font:600 10.5px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid var(--c);color:var(--c);background:rgba(11,15,43,.5)}
+  .rel{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:center;border:1px solid rgba(111,212,155,.45);border-radius:6px;padding:10px 12px;margin-bottom:8px;background:rgba(111,212,155,.05)}
+  .rel svg{width:92px;height:92px;display:block}
+  .rel .k{font:500 11px var(--font-mono);color:var(--silk-dim)}
+  .rel .v{font:800 24px/1.15 var(--font-display);font-stretch:112%;color:var(--alu);font-variant-numeric:tabular-nums}
+  .rel p{margin:3px 0 0;font-size:12.5px;color:var(--silk-dim);line-height:1.4}
+  .reg .bar{grid-column:1/-1;height:6px;border-radius:3px;background:#1a2350;margin-top:6px;overflow:hidden}
+  .reg .bar i{display:block;height:100%;width:0;background:var(--c,var(--out));border-radius:3px;box-shadow:0 0 6px var(--c,var(--out))}
+  .reg .rv small{font-size:11px;color:var(--silk-dim);font-weight:500}
+  .chart{width:100%;height:auto;display:block;background:var(--code-bg);border:1px solid var(--line);border-radius:5px}
+  .chart .gl{stroke:#232c63;stroke-width:1}
+  .chart .ax{stroke:#4a5490}
+  .chart .tk{font-size:9.5px;fill:#aeb3c9}
+  .chart .axt{font-size:9px;fill:#aeb3c9;letter-spacing:.03em}
+  .chart .cv{fill:none;stroke-width:2.4;stroke-linejoin:round}
+  .chart .cv.t{stroke:var(--cbt-gold)}
+  .chart .cv.i{stroke:var(--ctrl)}
+  .chart .ld{fill:none;stroke:var(--cbt-sky);stroke-dasharray:5 4;stroke-width:1.6}
+  .chart .fla{stroke:var(--silk-dim);stroke-dasharray:3 3;stroke-width:1}
+  .chart .po{fill:var(--cbt-sky)}
+  .chart .pot{font-size:9.5px;fill:var(--cbt-sky)}
+  .chart .dot{fill:var(--alu);stroke:#0b0f2b;stroke-width:1.5}
+  .chart .dot.hollow{fill:#0b0f2b;stroke:var(--alu);stroke-width:2}
+  .chart .dl{stroke:var(--alu);stroke-dasharray:2 3;stroke-width:1}
+  .chart .dv{font-size:11px;font-weight:700;fill:var(--silk)}
+  .ckey{display:flex;flex-wrap:wrap;gap:3px 12px;font:400 10.5px var(--font-mono);color:var(--silk-dim);margin:5px 0 10px}
+  .ckey span{display:inline-flex;align-items:center;gap:6px}
+  .ckey i{display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--c)}
+  .ckey i.dash{background:repeating-linear-gradient(90deg,var(--c) 0 4px,transparent 4px 7px)}
+  .ckey i.pt{width:9px;height:9px;border-radius:50%}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:5px}
+  .mx th{white-space:nowrap}
+  .mx td{vertical-align:top;font:400 11.5px/1.35 var(--font-body);color:var(--silk-dim);padding:6px 7px;transition:background .3s,color .3s}
+  .mx td:first-child{font:600 11px/1.3 var(--font-mono);color:var(--silk)}
+  .mx th.on{background:var(--cbt-gold);color:#1a1205}
+  .mx td.on{background:rgba(224,184,64,.13);color:var(--silk)}
+  .mxnow{font-size:12.5px;color:var(--silk-dim);margin:8px 0 0}
+  .mxnow b{color:var(--silk)}
+  .parts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .parts .btn{padding:6px 9px;font-size:11.5px}
+  .parts .btn.on{border-color:var(--cbt-gold);color:var(--cbt-gold)}
+  .info{font-size:13.5px;line-height:1.5;color:var(--silk-dim);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:11px 13px}
+  .info b{color:var(--silk)}
+  .model{font-size:13px;line-height:1.5;color:var(--silk-dim);border:1px solid rgba(224,184,64,.45);border-left:3px solid var(--cbt-gold);border-radius:6px;padding:10px 12px;background:rgba(224,184,64,.05)}
+  .model p{margin:0 0 6px}
+  .model p:last-child{margin:0}
+  .model b{color:var(--silk)}
+  .pole{pointer-events:none;font:700 calc(var(--lab) * 1.25) var(--font-mono);color:#6FD49B;text-shadow:0 0 8px rgba(111,212,155,.8),0 1px 2px #000}
+  .pole.s{color:#38B0E0;text-shadow:0 0 8px rgba(56,176,224,.7),0 1px 2px #000;font-size:calc(var(--lab) * 1.05)}
+  .flat .part{cursor:pointer}
+  .flat .part:focus{outline:none}
+  .flat .part:focus-visible .body{stroke:var(--cbt-gold);stroke-width:3}
+  .flat .lbl2{font-size:10px;fill:#aeb3c9;letter-spacing:.08em}
+  .flat .val2{font-size:15px;font-weight:700;fill:#eef1fa}
+  .flat .sub2{font-size:9px;fill:#aeb3c9}
+  .app .stage.flat-portrait{height:790px;max-height:none}
+  .stage.flat-portrait .flat{top:172px!important;height:calc(100% - 250px)!important}
+  @media(max-width:520px){
+    .stage .zone,.stage .tag .sb{display:none}
+    .hud .legend{max-width:100%}
+    .rel{grid-template-columns:76px minmax(0,1fr);gap:10px}
+    .rel svg{width:76px;height:76px}
+    .stage:has(.nogl:not([hidden])) .hud-top{top:62px}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand-logo" href="https://www.cbt.edu" target="_blank" rel="noopener" aria-label="CBT Technology Institute"><img src="https://raw.githubusercontent.com/luisleon-cbt/items/main/cbt-logo-mark.png" alt="CBT Technology Institute"></a>
+    <div class="crumb"><a href="../index.html"><b>LSN-MOTORS</b> Three-phase induction motor behavior</a> · Lesson 1 · Interactive A</div>
+  </div>
+</header>
+
+<div class="app">
+  <section class="stage" id="stage" aria-label="3D view of a three-phase induction motor, end view from above: stator coils, rotating field arrow, and squirrel-cage rotor. Drag to orbit, use the zoom buttons or scroll to zoom, click a part to learn what it does.">
+    <div class="hud hud-top">
+      <ol class="phases" aria-label="Phase">
+        <li data-p="stand" style="--c:var(--ctrl)">Standstill</li>
+        <li data-p="accel" style="--c:var(--cbt-gold)">Accelerating</li>
+        <li data-p="pull" style="--c:var(--cbt-sky)">Pull-out</li>
+        <li data-p="full" style="--c:var(--alu)">Full speed</li>
+        <li data-p="rev" style="--c:var(--oper)">Reverse</li>
+      </ol>
+      <div class="ticks">step <b id="hudStep">0</b> of 5</div>
+      <p class="credit">By Professor De Leon</p>
+    </div>
+    <div class="hud hud-bottom">
+      <div class="legend" aria-label="Colors">
+        <span style="--c:var(--cbt-gold)"><i></i>phase A</span>
+        <span style="--c:var(--cbt-sky)"><i></i>phase B</span>
+        <span style="--c:var(--ctrl)"><i></i>phase C</span>
+        <span style="--c:var(--alu)"><i></i>rotating field</span>
+        <span style="--c:var(--out)"><i></i>rotor current</span>
+        <span style="--c:var(--oper)"><i></i>rotor mark</span>
+      </div>
+      <div class="views" role="group" aria-label="Camera views">
+        <button type="button" data-view="overview" class="on">Overview</button>
+        <button type="button" data-view="motor">Motor</button>
+        <button type="button" data-view="top">Top</button>
+        <button type="button" id="follow" class="on" aria-pressed="true">Follow</button>
+      </div>
+    </div>
+    <div class="nogl" id="nogl" hidden>The 3D view needs WebGL and the 3D libraries, which are not available here. The flat end view shows the same steps.</div>
+  </section>
+
+  <aside class="panel">
+    <header>
+      <p class="eyebrow">LSN-MOTORS · Lesson 1 · Explorer</p>
+      <h1>Rotating field lab</h1>
+      <p class="lede">Run a three-phase motor from standstill to full speed and watch slip, rotor voltage, rotor frequency, current, power factor, and torque change. The motor is like the CV-2 conveyor motor at Biscayne Cold Storage in Medley (4 poles, 1725 RPM nameplate).</p>
+    </header>
+
+    <section aria-labelledby="hSetup">
+      <h2 id="hSetup">Set up the motor</h2>
+      <div class="setup">
+        <div class="fld"><label for="selPoles">Poles (P)</label>
+          <select id="selPoles">
+            <option value="2">2 poles</option>
+            <option value="4" selected>4 poles</option>
+            <option value="6">6 poles</option>
+            <option value="8">8 poles</option>
+          </select>
+        </div>
+        <div class="fld"><label for="selFreq">Supply frequency (f)</label>
+          <select id="selFreq">
+            <option value="60" selected>60 Hz</option>
+            <option value="50">50 Hz</option>
+          </select>
+        </div>
+        <div class="fld full"><div class="formula" id="nsFormula"></div></div>
+        <div class="fld full"><label for="selLoad">Load on the shaft</label>
+          <select id="selLoad">
+            <option value="0">No load (friction only)</option>
+            <option value="25">25% of rated load</option>
+            <option value="50">50% of rated load</option>
+            <option value="75">75% of rated load</option>
+            <option value="100" selected>100% of rated load</option>
+            <option value="125">125% of rated load</option>
+          </select>
+        </div>
+        <div class="fld full"><label for="spd">Rotor speed in the field's direction (drag to hold the rotor at a speed)</label>
+          <div class="slider"><input type="range" id="spd" min="0" max="1800" step="1" value="0"><output id="spdOut" for="spd">0 RPM</output></div>
+          <p class="note" id="spdNote"></p>
+        </div>
+        <div class="fld full act">
+          <button type="button" class="btn" id="btnStart">Start motor</button>
+          <button type="button" class="btn" id="btnSwap">Swap two leads</button>
+          <button type="button" class="btn" id="btnSpin" aria-pressed="false">Pause spin</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="narr" aria-live="polite">
+      <div class="narr-head"><span class="ptag" id="phaseTag">Ready</span><span id="ctx">Step 0 of 5</span></div>
+      <p id="narration">Press Step to start, or Run to play every step.</p>
+    </section>
+    <div>
+      <div class="controls">
+        <button type="button" class="btn primary" id="btnRun">Run</button>
+        <button type="button" class="btn" id="btnStep">Step</button>
+        <button type="button" class="btn" id="btnBack">Step back</button>
+        <button type="button" class="btn" id="btnReset">Reset</button>
+      </div>
+      <div class="speed" style="margin-top:12px"><label for="speed">Speed</label><input type="range" id="speed" min="0" max="4" step="1" value="2"><output id="speedOut">1×</output></div>
+      <p class="hint" style="margin-top:8px">Keyboard: Space steps, B steps back, R runs or pauses, + and - zoom. Changing a setting starts the narrated steps over.</p>
+    </div>
+
+    <section aria-labelledby="hLive">
+      <div class="sec-head"><h2 id="hLive">Live readings</h2><span class="statep" id="statePill">Standstill</span></div>
+      <div class="rel">
+        <svg viewBox="-50 -50 100 100" id="dial" role="img" aria-label="The field as seen from the rotor"></svg>
+        <div>
+          <div class="k">Slip speed, Ns - Nr (the field as seen from the rotor)</div>
+          <div class="v" id="vRel">1800 RPM</div>
+          <p id="tRel"></p>
+        </div>
+      </div>
+      <div class="regs">
+        <div class="reg kv"><span class="rn">Ns</span><span class="rv" id="vNs">1800</span><span class="rf">synchronous speed, RPM</span><span class="rs" id="sNs"></span></div>
+        <div class="reg kv"><span class="rn">Nr</span><span class="rv" id="vNr">0</span><span class="rf">rotor speed, RPM</span><span class="rs" id="sNr"></span></div>
+        <div class="reg kv"><span class="rn">Slip s</span><span class="rv" id="vS">1.0000</span><span class="rf">(Ns - Nr) / Ns</span><span class="rs" id="sS"></span></div>
+        <div class="reg kv"><span class="rn">fr</span><span class="rv" id="vFr">60.0</span><span class="rf">rotor frequency, Hz</span><span class="rs" id="sFr"></span></div>
+        <div class="reg kv wide" style="--c:var(--out)"><span class="rn">E2</span><span class="rv" id="vE2">100%</span><span class="rf">induced rotor voltage, E2 = s × E20</span><span class="rs">of E20</span><div class="bar"><i id="bE2"></i></div></div>
+        <div class="reg kv"><span class="rn">X2</span><span class="rv" id="vX2">0.200</span><span class="rf">rotor reactance, per unit</span><span class="rs">s × 0.20</span></div>
+        <div class="reg kv" style="--c:var(--out)"><span class="rn">I2</span><span class="rv" id="vI2">4.90</span><span class="rf">rotor current, per unit</span><span class="rs" id="sI2"></span><div class="bar"><i id="bI2"></i></div></div>
+        <div class="reg kv" style="--c:var(--ctrl)"><span class="rn">Iline</span><span class="rv" id="vIl">4.4</span><span class="rf">line current, × FLA (FLA 2.4 A)</span><span class="rs" id="sIl"></span><div class="bar"><i id="bIl"></i></div></div>
+        <div class="reg kv" style="--c:var(--alu)"><span class="rn">PF</span><span class="rv" id="vPf">0.20</span><span class="rf">rotor power factor</span><span class="rs" id="sPf"></span><div class="bar"><i id="bPf"></i></div></div>
+        <div class="reg kv wide" style="--c:var(--cbt-gold)"><span class="rn">Torque</span><span class="rv" id="vT">0.96</span><span class="rf">motor torque, × rated (rated = 1.00)</span><span class="rs" id="sT"></span><div class="bar"><i id="bT"></i></div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="hCharts">
+      <div class="sec-head"><h2 id="hCharts">Torque and current against speed</h2><small id="chartTag"></small></div>
+      <svg class="chart" id="chartT" viewBox="0 0 340 150" role="img" aria-label="Torque against rotor speed, with the load and the operating point"></svg>
+      <div class="ckey"><span style="--c:var(--cbt-gold)"><i></i>motor torque</span><span style="--c:var(--cbt-sky)"><i class="dash"></i>load (grows with speed)</span><span style="--c:var(--cbt-sky)"><i class="pt"></i>pull-out</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></div>
+      <svg class="chart" id="chartI" viewBox="0 0 340 150" role="img" aria-label="Line current against rotor speed, with the operating point"></svg>
+      <div class="ckey"><span style="--c:var(--ctrl)"><i></i>line current</span><span style="--c:var(--alu)"><i class="pt"></i>operating point</span></div>
+    </section>
+
+    <section aria-labelledby="hMx">
+      <h2 id="hMx">Three-state matrix</h2>
+      <div class="tw"><table class="mx"><thead><tr><th scope="col">Quantity</th><th scope="col" data-c="standstill">Standstill</th><th scope="col" data-c="accel">Accelerating</th><th scope="col" data-c="full">Full speed</th></tr></thead><tbody id="mxBody"></tbody></table></div>
+      <p class="mxnow" id="mxNow"></p>
+    </section>
+
+    <section aria-labelledby="hParts">
+      <h2 id="hParts">Parts of the motor</h2>
+      <div class="parts" id="parts" role="group" aria-label="Learn a part"></div>
+      <div class="info" id="info" aria-live="polite">Click any part on the board, or a button above, to learn what it does.</div>
+    </section>
+
+    <section aria-labelledby="hModel">
+      <h2 id="hModel">About these numbers</h2>
+      <div class="model">
+        <p>The numbers come from a <b>simplified teaching model</b>, the same one every activity in this lesson uses. Per-unit rotor values are R2 = 0.04 and X20 = 0.20 at E20 = 1 with constant flux, plus a magnetizing current of 0.4 × FLA. The model leaves out the stator resistance and other losses, and it gives every motor a rated slip of 4.17% (real nameplates vary: the F-3 fan slips 5.0%).</p>
+        <p><b>Real motors draw roughly 5 to 7 times full-load current at start.</b> This model shows about 4.4 times, so read its starting current as "several times FLA", not as an exact value.</p>
+        <p>The load in this lab grows with speed, like a fan or a compressor, so it reaches the chosen value at full speed. The picture turns 100 times slower than the real motor so you can follow it.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Things to notice</h2>
+      <ul class="notice">
+        <li>The field always turns at Ns. Only the rotor speed changes, and the gap between them (the slip speed) decides everything else.</li>
+        <li>E2 = s × E20 and fr = s × f, so at full load the rotor sees only about 4% of its standstill voltage, and 2.5 Hz instead of 60 Hz.</li>
+        <li>Starting current is high because the slip is 1, but starting torque is only modest because the rotor power factor is poor.</li>
+        <li>Maximum torque (pull-out) comes at 20% slip in this model, where the rotor reactance equals the rotor resistance.</li>
+        <li>More load means more slip: raise the load and watch the operating point move to a lower speed on the torque chart.</li>
+        <li>Swapping any two leads reverses the field, and the rotor follows it the other way.</li>
+      </ul>
+    </section>
+    <footer style="font-size:12px;color:var(--silk-dim);border-top:1px solid var(--line);padding-top:12px">CBT Technology Institute · Flagler Campus · LSN-MOTORS Three-phase induction motor behavior<div class="byline">By Professor De Leon</div></footer>
+  </aside>
+</div>
+
+<script>
+(function () {
+"use strict";
+const hasGSAP = typeof window.gsap !== 'undefined';
+const $ = s => document.querySelector(s);
+// LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
+// Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
+// Returns null when any of them (or WebGL) is missing: then draw the 2D fallback.
+//
+// const lab = Lab3D(stageEl, {
+//   board: {w: 22.4, d: 13.6, cx: 0, cz: 0.2, silk: 'BAY-4  REV 1.0  ...', seed: 11},
+//   views: {overview: {pos: [0, 17, 14.5], tgt: [0, 0, 0.4], want: 1.55}, cpu: {...}},
+//   colors: {copper: '#E0B840'}, palette: {...}
+// });
+// lab.chip(key, {x, z, w, d, h, nm, body, metal, cell})  -> rec {g, mat, el, val, sub, h, key}
+// lab.silkRect(x0, x1, z0, z1)   lab.zone(text, x, z, color)   lab.label(html, cls, x, y, z, parent)
+// lab.busMat(color, {base, rest})  lab.trace([{x,z}...], lines, mat)  lab.glowBus(mat)
+// lab.fly([{x,z}...], text, color, {y, dur}) -> GSAP timeline (packet sphere + halo + pill label)
+// lab.hi(rec, color)  lab.clear()  lab.pop(rec)  lab.setView(name)  lab.zoom(factor)  lab.intro()  lab.onPick(fn)  lab.clearPackets()
+// Zoom buttons (+, -, FIT) and the + - 0 keys are added to the stage automatically (opts.zoomUI: false turns them off; opts.fitView picks the FIT view).
+function Lab3D(stage, opts) {
+  opts = opts || {};
+  const hasG = typeof window.gsap !== 'undefined';
+  if (!window.THREE || !THREE.OrbitControls || !THREE.CSS2DRenderer || !hasG) return null;
+  try { const t = document.createElement('canvas'); if (!(t.getContext('webgl') || t.getContext('experimental-webgl'))) return null; } catch (e) { return null; }
+  const T = THREE;
+  const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const B = Object.assign({w: 22.4, d: 13.6, cx: 0, cz: 0.2, silk: '', seed: 11}, opts.board || {});
+  // CBT palette (override any key with opts.palette)
+  const P = Object.assign({
+    boardA: '#1a2257', boardB: '#10163f', dots: 'rgba(238,241,250,0.04)', trace: '224,184,64', via: '#0a0e2a',
+    silkText: 'rgba(238,241,250,0.34)', edge: 0x0d1238, clear: 0x0b0f2b, sky: 0xdfe6ff, ground: 0x10163f, rim: 0x38b0e0,
+    chip: '#161a2e', cell: '#1c2138', pinDot: 0x7a809c, font: '"Red Hat Mono", ui-monospace, monospace',
+    uiBg: 'rgba(11,15,43,.82)', uiLine: '#2a3470', uiText: '#eef1fa', uiHover: '#171f4f', uiAccent: '#E0B840'
+  }, opts.palette || {});
+  const COPPER = (opts.colors && opts.colors.copper) || '#E0B840';
+
+  const renderer = new T.WebGLRenderer({antialias: true, powerPreference: 'high-performance'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.setClearColor(P.clear, 0);
+  renderer.domElement.className = 'gl';
+  stage.prepend(renderer.domElement);
+  const labelR = new T.CSS2DRenderer();
+  labelR.domElement.className = 'labels';
+  renderer.domElement.after(labelR.domElement);
+
+  const scene = new T.Scene();
+  scene.fog = new T.Fog(P.clear, 34, 70);
+  const camera = new T.PerspectiveCamera(40, 1, 0.1, 200);
+  const controls = new T.OrbitControls(camera, labelR.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 5; controls.maxDistance = 42;
+  controls.zoomSpeed = 1.1;
+  // keep the mouse wheel inside the 3D view: zoom the board, do not scroll the page
+  stage.addEventListener('wheel', e => e.preventDefault(), {passive: false});
+
+  scene.add(new T.HemisphereLight(P.sky, P.ground, 0.6));
+  const sun = new T.DirectionalLight(0xfff1dc, 1.0); sun.position.set(-7, 16, 9); sun.castShadow = true;
+  sun.shadow.mapSize.set(1536, 1536);
+  Object.assign(sun.shadow.camera, {left: -B.w / 2 - 2, right: B.w / 2 + 2, top: B.d / 2 + 2, bottom: -B.d / 2 - 2, near: 1, far: 44});
+  sun.shadow.bias = -0.0005; scene.add(sun);
+  const rim = new T.DirectionalLight(P.rim, 0.35); rim.position.set(12, 6, -10); scene.add(rim);
+
+  // board: a canvas texture with a dot grid, random copper traces, vias, mounting holes and silkscreen
+  function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const cv = document.createElement('canvas'); cv.width = 2048; cv.height = Math.round(2048 * B.d / B.w);
+  function drawBoard() {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, rnd = rng(B.seed);
+    const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, P.boardA); grd.addColorStop(1, P.boardB);
+    g.fillStyle = grd; g.fillRect(0, 0, W, H);
+    g.fillStyle = P.dots;
+    for (let x = 0; x < W; x += 28) for (let y = 0; y < H; y += 28) g.fillRect(x, y, 2, 2);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    for (let i = 0; i < 85; i++) {
+      let x = rnd() * W, y = rnd() * H, dir = Math.floor(rnd() * 8);
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 4; k++) { dir = (dir + (rnd() < .5 ? 1 : 7)) % 8; const len = 30 + rnd() * 170, a = dir * Math.PI / 4; x += Math.cos(a) * len; y += Math.sin(a) * len; g.lineTo(x, y); }
+      g.strokeStyle = 'rgba(' + P.trace + ',' + (0.06 + rnd() * 0.09) + ')'; g.lineWidth = 2 + rnd() * 3; g.stroke();
+      g.beginPath(); g.arc(x, y, 5.5, 0, Math.PI * 2); g.fillStyle = 'rgba(' + P.trace + ',0.22)'; g.fill();
+      g.beginPath(); g.arc(x, y, 2.2, 0, Math.PI * 2); g.fillStyle = P.via; g.fill();
+    }
+    [[60, 60], [W - 60, 60], [60, H - 60], [W - 60, H - 60]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 26, 0, Math.PI * 2); g.fillStyle = 'rgba(' + P.trace + ',0.35)'; g.fill(); g.beginPath(); g.arc(x, y, 15, 0, Math.PI * 2); g.fillStyle = P.via; g.fill(); });
+    g.font = '500 24px ' + P.font;
+    g.fillStyle = P.silkText;
+    if (B.silk) g.fillText(B.silk, 120, H - 48);
+    g.fillText('U1', 120, 92);
+  }
+  drawBoard();
+  const tex = new T.CanvasTexture(cv); tex.encoding = T.sRGBEncoding; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawBoard(); tex.needsUpdate = true; });
+  const edge = new T.MeshStandardMaterial({color: P.edge, roughness: .8});
+  const topM = new T.MeshStandardMaterial({map: tex, roughness: .62, metalness: .05});
+  const board = new T.Mesh(new T.BoxGeometry(B.w, 0.36, B.d), [edge, edge, topM, edge, edge, edge]);
+  board.position.set(B.cx, -0.18, B.cz); board.receiveShadow = true; scene.add(board);
+
+  const unit = new T.BoxGeometry(1, 1, 1);
+  const silk = new T.MeshBasicMaterial({color: 0xeef1fa, transparent: true, opacity: .5});
+  function silkRect(x0, x1, z0, z1) {
+    const t = 0.05;
+    [[x0, x1, z0, z0], [x0, x1, z1, z1], [x0, x0, z0, z1], [x1, x1, z0, z1]].forEach(([a, b, c, d]) => {
+      const m = new T.Mesh(unit, silk); m.scale.set(Math.abs(b - a) + t, 0.01, Math.abs(d - c) + t);
+      m.position.set((a + b) / 2, 0.006, (c + d) / 2); scene.add(m);
+    });
+  }
+  function busMat(color, o) {
+    o = o || {};
+    const m = new T.MeshStandardMaterial({color: new T.Color(o.base || color).multiplyScalar(o.base ? 1 : 0.55), emissive: new T.Color(color), emissiveIntensity: o.rest != null ? o.rest : 0.22, roughness: .35, metalness: .65});
+    m.userData.rest = m.emissiveIntensity; return m;
+  }
+  const nrm = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1; return {x: -dz / L, z: dx / L}; };
+  function offsetLine(p, o) {
+    return p.map((q, i) => {
+      const nIn = i > 0 ? nrm(p[i - 1], q) : null, nOut = i < p.length - 1 ? nrm(q, p[i + 1]) : null;
+      let n = nIn || nOut;
+      if (nIn && nOut) { const k = 1 / (1 + nIn.x * nOut.x + nIn.z * nOut.z); n = {x: (nIn.x + nOut.x) * k, z: (nIn.z + nOut.z) * k}; }
+      return {x: q.x + n.x * o, z: q.z + n.z * o};
+    });
+  }
+  function trace(points, lines, mat) {
+    const gap = 0.075, w = 0.04;
+    for (let li = 0; li < lines; li++) {
+      const pts = offsetLine(points, (li - (lines - 1) / 2) * gap);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+        const m = new T.Mesh(unit, mat); m.scale.set(L + w, 0.03, w); m.position.set((a.x + b.x) / 2, 0.016, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(dz, dx);
+        m.receiveShadow = true; scene.add(m);
+      }
+      [pts[0], pts[pts.length - 1]].forEach(p => { const pad = new T.Mesh(unit, mat); pad.scale.set(0.07, 0.032, 0.07); pad.position.set(p.x, 0.016, p.z); scene.add(pad); });
+    }
+  }
+  function glowBus(m) {
+    if (!m) return;
+    gsap.killTweensOf(m);
+    gsap.timeline().to(m, {emissiveIntensity: 1.8, duration: 0.2}).to(m, {emissiveIntensity: m.userData.rest, duration: 1.4});
+  }
+  function label(html, cls, x, y, z, parent) {
+    const el = document.createElement('div'); el.className = cls; el.innerHTML = html;
+    const o = new T.CSS2DObject(el); o.position.set(x, y, z); (parent || scene).add(o); el._obj = o; return el;
+  }
+  function zone(text, x, z, color) { const el = label(text, 'zone', x, 0.05, z); if (color) el.style.setProperty('--c', color); return el; }
+
+  const pinSpots = [], recs = {}, pickables = [];
+  const dotMat = new T.MeshBasicMaterial({color: P.pinDot});
+  function chip(key, o) {
+    const w = o.w || 1.4, d = o.d || 1.2, h = o.h || (o.cell ? 0.28 : 0.34);
+    const g = new T.Group(); g.position.set(o.x, 0, o.z);
+    const mat = new T.MeshStandardMaterial({color: o.body || (o.cell ? P.cell : P.chip), roughness: .42, metalness: o.metal || .22, emissive: new T.Color(0xffffff), emissiveIntensity: 0});
+    const body = new T.Mesh(unit, mat); body.scale.set(w, h, d); body.position.y = h / 2 + 0.03; body.castShadow = true; body.receiveShadow = true; g.add(body);
+    body.userData.key = key; pickables.push(body);
+    if (!o.metal) { const dot = new T.Mesh(new T.CircleGeometry(0.05, 16), dotMat); dot.rotation.x = -Math.PI / 2; dot.position.set(-w / 2 + 0.14, h + 0.035, -d / 2 + 0.14); g.add(dot); }
+    if (!o.noPins) {
+      const n = Math.max(2, Math.floor((w - 0.2) / 0.22));
+      for (let i = 0; i < n; i++) { const px = -w / 2 + 0.14 + i * ((w - 0.28) / (n - 1)); pinSpots.push([o.x + px, o.z - d / 2 - 0.07], [o.x + px, o.z + d / 2 + 0.07]); }
+    }
+    scene.add(g);
+    const el = label('<span class="nm">' + (o.nm || key) + '</span><span class="vl"></span><span class="sb"></span>', 'tag' + (o.cell ? ' cell' : ''), 0, h + 0.08, 0, g);
+    const rec = {key: key, cell: !!o.cell, g: g, mat: mat, el: el, val: el.querySelector('.vl'), sub: el.querySelector('.sb'), h: h, x: o.x, z: o.z};
+    recs[key] = rec; return rec;
+  }
+  function finishPins() {
+    const pinGeo = new T.BoxGeometry(0.07, 0.05, 0.16), pinMat = new T.MeshStandardMaterial({color: 0xc9ced1, metalness: .9, roughness: .3});
+    const pins = new T.InstancedMesh(pinGeo, pinMat, Math.max(1, pinSpots.length)), mtx = new T.Matrix4();
+    pinSpots.forEach(([x, z], i) => { mtx.makeTranslation(x, 0.045, z); pins.setMatrixAt(i, mtx); });
+    scene.add(pins);
+  }
+
+  // packets: a small sphere with an additive halo and a pill label
+  const haloCv = document.createElement('canvas'); haloCv.width = haloCv.height = 64;
+  const hg = haloCv.getContext('2d'), rg = hg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.35, 'rgba(255,255,255,.35)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  hg.fillStyle = rg; hg.fillRect(0, 0, 64, 64);
+  const haloTex = new T.CanvasTexture(haloCv);
+  const pktGeo = new T.SphereGeometry(0.13, 20, 14);
+  const live = new Set();
+  function removePacket(p) {
+    scene.remove(p.mesh); if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+    p.mesh.material.dispose(); p.halo.material.dispose(); live.delete(p);
+  }
+  function fly(path, text, color, o) {
+    o = o || {};
+    const y = o.y != null ? o.y : 0.8;
+    const v = path.map(p => new T.Vector3(p.x, y, p.z));
+    const mesh = new T.Mesh(pktGeo, new T.MeshBasicMaterial({color: new T.Color(color)}));
+    const halo = new T.Sprite(new T.SpriteMaterial({map: haloTex, color: new T.Color(color), blending: T.AdditiveBlending, depthWrite: false, transparent: true}));
+    halo.scale.set(1.1, 1.1, 1.1); mesh.add(halo);
+    const el = document.createElement('div'); el.className = 'pkt'; el.style.setProperty('--c', color); el.textContent = text;
+    const lab = new T.CSS2DObject(el); lab.position.set(0, 0.42, 0); mesh.add(lab);
+    mesh.position.copy(v[0]); mesh.scale.setScalar(0.01); mesh.visible = false; scene.add(mesh);
+    const p = {mesh: mesh, halo: halo, el: el}; live.add(p);
+    let L = 0; for (let i = 1; i < v.length; i++) L += v[i].distanceTo(v[i - 1]);
+    const total = o.dur || Math.max(0.5, Math.min(2.2, L / 7));
+    const tl = gsap.timeline({onComplete: () => removePacket(p)});
+    tl.call(() => { mesh.visible = true; });
+    tl.to(mesh.scale, {x: 1, y: 1, z: 1, duration: 0.18, ease: 'back.out(2)'});
+    for (let i = 1; i < v.length; i++) { const seg = v[i].distanceTo(v[i - 1]); tl.to(mesh.position, {x: v[i].x, y: v[i].y, z: v[i].z, duration: L ? total * seg / L : 0.1, ease: 'none'}); }
+    tl.to(mesh.scale, {x: 0.01, y: 0.01, z: 0.01, duration: 0.18, ease: 'power2.in'});
+    return tl;
+  }
+  function clearPackets() { Array.from(live).forEach(removePacket); }
+
+  const active = new Set();
+  function hi(rec, color) {
+    if (!rec) return;
+    rec.mat.emissive.set(color).convertSRGBToLinear(); gsap.to(rec.mat, {emissiveIntensity: rec.cell ? 0.42 : 0.34, duration: 0.3, overwrite: 'auto'});
+    rec.el.classList.add('on'); active.add(rec);
+  }
+  function clear() {
+    active.forEach(r => { gsap.to(r.mat, {emissiveIntensity: 0, duration: 0.5, overwrite: 'auto'}); r.el.classList.remove('on'); });
+    active.clear();
+  }
+  function pop(rec, big) {
+    if (!rec || RM) return;
+    gsap.fromTo(rec.g.scale, {x: 1.12, y: big ? 1.8 : 1.5, z: 1.12}, {x: 1, y: 1, z: 1, duration: 0.65, ease: 'elastic.out(1,0.5)'});
+  }
+
+  // camera views keep the whole subject in frame on narrow screens
+  const views = opts.views || {overview: {pos: [0, 17, 14.5], tgt: [0, 0, 0.4], want: 1.55}};
+  function viewFor(name) {
+    const b = views[name] || views.overview;
+    const tgt = new T.Vector3(...b.tgt), pos = new T.Vector3(...b.pos);
+    const want = b.want || 1.25;
+    let f = camera.aspect < want ? Math.min(2.4, want / camera.aspect) : 1;
+    if (name === 'overview' || !views[name]) {
+      // the overview (and FIT) must show the whole board width, also on narrow phone screens,
+      // leaving room for the zoom buttons at the right edge
+      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
+      f = Math.max(f, need / pos.distanceTo(tgt));
+      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+    }
+    pos.sub(tgt).multiplyScalar(f).add(tgt);
+    return {pos: pos, tgt: tgt};
+  }
+  function setView(name, instant) {
+    const v = viewFor(name), d = (RM || instant) ? 0 : 1.2;
+    const k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: v.pos.x, y: v.pos.y, z: v.pos.z, duration: d, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+    gsap.to(controls.target, {x: v.tgt.x, y: v.tgt.y, z: v.tgt.z, duration: d, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+  }
+  function focusOn(x, z, dist) {
+    const d = (dist || 7) * (camera.aspect < 1.2 ? Math.min(2.2, 1.25 / camera.aspect) : 1);
+    const k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: x * 0.8, y: d * 1.15, z: z + d, duration: RM ? 0 : 1.0, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+    gsap.to(controls.target, {x: x, y: 0, z: z, duration: RM ? 0 : 1.0, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+  }
+
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); renderer.domElement.style.width = w + 'px'; renderer.domElement.style.height = h + 'px';
+    labelR.setSize(w, h);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    stage.style.setProperty('--lab', Math.max(7, Math.min(12, w / 92)) + 'px');
+  }
+  // zoom buttons (+, -, Fit) and keys (+, -, 0): the mouse wheel and pinch still work, but buttons always do
+  function zoom(f) {
+    const t = controls.target, off = camera.position.clone().sub(t);
+    off.setLength(Math.max(controls.minDistance, Math.min(controls.maxDistance, off.length() * f)));
+    const p = t.clone().add(off), k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: p.x, y: p.y, z: p.z, duration: RM ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'}).timeScale(k);
+  }
+  if (opts.zoomUI !== false) {
+    if (!document.getElementById('lab3d-zoom-css')) {
+      const st = document.createElement('style'); st.id = 'lab3d-zoom-css';
+      st.textContent = '.zoomctl{position:absolute;z-index:4;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;padding:4px;background:' + P.uiBg + ';border:1px solid ' + P.uiLine + ';border-radius:6px;backdrop-filter:blur(6px)}' +
+        '.zoomctl button{width:38px;height:34px;border:0;border-radius:4px;background:transparent;color:' + P.uiText + ';font:600 18px/1 ' + P.font + ';cursor:pointer;padding:0}' +
+        '.zoomctl button.fit{font-size:10px;letter-spacing:.06em;height:28px}.zoomctl button:hover{background:' + P.uiHover + ';color:' + P.uiAccent + '}' +
+        '.zoomctl button:focus-visible{outline:2px solid ' + P.uiAccent + ';outline-offset:1px}@media(max-width:520px){.zoomctl{right:10px}.zoomctl button{width:34px;height:32px}}';
+      document.head.appendChild(st);
+    }
+    const box = document.createElement('div'); box.className = 'zoomctl'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Zoom');
+    box.innerHTML = '<button type="button" data-z="in" aria-label="Zoom in" title="Zoom in (+)">+</button>' +
+      '<button type="button" data-z="out" aria-label="Zoom out" title="Zoom out (-)">&minus;</button>' +
+      '<button type="button" class="fit" data-z="fit" aria-label="Show the whole board" title="Show the whole board (0)">FIT</button>';
+    stage.appendChild(box);
+    ['pointerdown', 'pointerup', 'wheel', 'click'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation()));
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.z === 'in') zoom(0.75); else if (b.dataset.z === 'out') zoom(1.33); else setView(opts.fitView || 'overview');
+    });
+    document.addEventListener('keydown', e => {
+      const t = e.target, tag = t && t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+      if (e.key === '+' || e.key === '=') zoom(0.75);
+      else if (e.key === '-' || e.key === '_') zoom(1.33);
+      else if (e.key === '0') setView(opts.fitView || 'overview');
+    });
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); labelR.render(scene, camera); })();
+
+  // picking: click (not drag) on a chip body
+  const ray = new T.Raycaster(), mouse = new T.Vector2(); let down = null, pickCb = null;
+  labelR.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  labelR.domElement.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || !pickCb) return;
+    const r = labelR.domElement.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hit = ray.intersectObjects(pickables, false)[0];
+    if (hit) pickCb(hit.object.userData.key);
+  });
+
+  function intro() {
+    const v = viewFor('overview'); camera.position.copy(v.pos); controls.target.copy(v.tgt);
+    if (RM) return;
+    gsap.from(camera.position, {x: v.pos.x - 4, y: v.pos.y + 12, z: v.pos.z + 10, duration: 1.8, ease: 'power3.out'});
+    gsap.from(Object.values(recs).map(r => r.g.position), {y: 2.2, duration: 0.7, ease: 'back.out(1.6)', stagger: 0.03, delay: 0.2});
+  }
+
+  const labApi = {T: T, scene: scene, camera: camera, controls: controls, renderer: renderer, recs: recs,
+    chip: chip, finishPins: finishPins, silkRect: silkRect, zone: zone, label: label, busMat: busMat, trace: trace, glowBus: glowBus,
+    fly: fly, clearPackets: clearPackets, hi: hi, clear: clear, pop: pop, setView: setView, focusOn: focusOn, intro: intro, zoom: zoom,
+    onPick: cb => { pickCb = cb; }, unit: unit};
+  (window.__labs = window.__labs || []).push(labApi);   // lets tests reach the camera
+  return labApi;
+}
+// LAB3D END
+
+// ---- LOGIC START: the lesson's teaching model as plain functions (tested with node) ----
+// Per-unit rotor model, constant flux: R2 = 0.04, X20 = 0.20, E20 = 1. Magnetizing current m = 0.4 (per FLA).
+const MODEL = {R2: 0.04, X20: 0.20, E20: 1, M: 0.4, S_RATED: 0.0417, FLA: 2.4, FRICTION: 0.05};
+function syncSpeed(f, poles) { return 120 * f / poles; }                       // Ns = 120 f / P
+function slipOf(ns, nr) { return (ns - nr) / ns; }                              // s = (Ns - Nr) / Ns
+function rotorFreq(s, f) { return s * f; }                                      // fr = s f
+function rotorEmf(s) { return s * MODEL.E20; }                                  // E2 = s E20
+function rotorReactance(s) { return s * MODEL.X20; }                            // X2 = s X20
+function rotorImpedance(s) { return Math.sqrt(MODEL.R2 * MODEL.R2 + Math.pow(s * MODEL.X20, 2)); }
+function rotorCurrent(s) { return s / rotorImpedance(s); }                      // I2 = s / sqrt(R2^2 + (s X20)^2)
+function powerFactor(s) { return MODEL.R2 / rotorImpedance(s); }                // PF = R2 / sqrt(R2^2 + (s X20)^2)
+function torque(s) { return s * MODEL.R2 / (MODEL.R2 * MODEL.R2 + Math.pow(s * MODEL.X20, 2)); }   // x rated
+function lineCurrentRatio(s) {                                                  // I_line / FLA
+  const r = rotorCurrent(s) / rotorCurrent(MODEL.S_RATED);
+  return Math.sqrt(MODEL.M * MODEL.M + r * r * (1 - MODEL.M * MODEL.M));
+}
+function lineCurrent(s, fla) { return (fla == null ? MODEL.FLA : fla) * lineCurrentRatio(s); }
+function pullOutSlip() { return +(MODEL.R2 / MODEL.X20).toFixed(6); }          // maximum torque where s X20 = R2 (0.2)
+function loadTorque(pct) { return pct === 0 ? MODEL.FRICTION : pct / 100; }     // load at full speed, x rated
+// operating slip: solve T(s) = L on the stable side (below pull-out): L X20^2 s^2 - R2 s + L R2^2 = 0
+function operatingSlip(L) {
+  if (L <= 0) return 0;
+  const a = L * MODEL.X20 * MODEL.X20, b = -MODEL.R2, c = L * MODEL.R2 * MODEL.R2, d = b * b - 4 * a * c;
+  if (d < 0) return NaN;                                                        // more than pull-out torque: stall
+  return (-b - Math.sqrt(d)) / (2 * a);
+}
+function operatingSpeed(ns, L) { return ns * (1 - operatingSlip(L)); }
+// the lab load grows with the square of speed (like a fan) and always opposes the rotation
+function loadAt(u, L, nop) { const r = u / nop; return Math.sign(u) * L * r * r; }
+function motorState(s) { if (s > 1.02) return 'braking'; if (s >= 0.98) return 'standstill'; if (s <= 0.07) return 'full'; return 'accel'; }
+function readings(S) {
+  const ns = syncSpeed(S.f, S.poles), u = S.u, s = slipOf(ns, u), L = loadTorque(S.load), nop = operatingSpeed(ns, L);
+  return {ns: ns, u: u, s: s, slipRpm: ns - u, fr: rotorFreq(s, S.f), e2: rotorEmf(s), x2: rotorReactance(s),
+    i2: rotorCurrent(s), pf: powerFactor(s), t: torque(s), iRatio: lineCurrentRatio(s), iA: lineCurrent(s),
+    state: motorState(s), L: L, nop: nop, tLoad: loadAt(u, L, nop)};
+}
+// ---- LOGIC END ----
+
+const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SVGNS = 'http://www.w3.org/2000/svg';
+const COL = {A: '#E0B840', B: '#38B0E0', C: '#F0786A', field: '#6FD49B', rotorI: '#9FE7FF', mark: '#A9B4FF'};
+const GEO = {rOut: 3.3, rBore: 2.05, rCoil: 2.32, rRotor: 1.8, nBars: 24};
+const K = 2 * Math.PI / 6000;            // picture speed: 1800 RPM shows as 0.3 turns a second (100 times slower)
+// coil k sits at electrical angle k x 60 degrees; windings T1 T2 T3 in the order A, -C, B, -A, C, -B
+const WIND = ['A', 'C', 'B', 'A', 'C', 'B'];
+const PRIME = [false, true, false, true, false, true];
+function coilPhase(k, dir) { const w = WIND[k % 6]; return dir < 0 && w !== 'A' ? (w === 'B' ? 'C' : 'B') : w; }
+const nsOf = S => syncSpeed(S.f, S.poles);
+const nopOf = S => Math.round(operatingSpeed(nsOf(S), loadTorque(S.load)));
+const fmtHz = x => (Math.abs(x) >= 1 ? x.toFixed(1) : x.toFixed(2));
+const f2 = x => x.toFixed(2);
+const mod = (x, m) => ((x % m) + m) % m;
+const MOTORS = {2: 'C-1 compressor motor (nameplate 3450 RPM)', 4: 'CV-2 conveyor motor, the lab trainer (nameplate 1725 RPM)', 6: 'F-3 evaporator fan (nameplate 1140 RPM)', 8: 'P-4 old pump motor (nameplate 870 RPM)'};
+
+// ---- layout shared by the 3D board and the flat 2D board (x right, z toward the viewer) ----
+function layoutOf(portrait) {
+  const R = GEO.rOut;
+  if (!portrait) {
+    const mc = {x: 0.6, z: 0}, zl = [1.3, 1.7, 2.1], px = [-6.2, -5.5, -4.8];
+    const xe = z => mc.x - Math.sqrt(R * R - (z - mc.z) * (z - mc.z)) + 0.03;
+    return {bw: 15, bd: 9.4, mc: mc,
+      ch: {supply: {x: -5.5, z: -2.5, w: 2.4, d: 1.5, nm: 'SUPPLY'}, leads: {x: -5.5, z: 1.7, w: 2.4, d: 1.4, nm: 'LEADS'},
+        tach: {x: 5.9, z: -2.9, w: 2.0, d: 1.3, nm: 'TACH'}, slip: {x: 5.9, z: 0, w: 2.0, d: 1.3, nm: 'SLIP'}, fr: {x: 5.9, z: 2.9, w: 2.0, d: 1.3, nm: 'ROTOR fr'}},
+      lines(dir) {
+        return ['A', 'B', 'C'].map((ph, i) => {
+          const j = dir < 0 && i > 0 ? 3 - i : i;          // the motor lead this phase feeds
+          const up = [{x: px[i], z: -1.75}, {x: px[i], z: 1.0}];
+          const dn = j === i ? [{x: -4.3, z: zl[i]}, {x: xe(zl[i]), z: zl[i]}]
+            : [{x: -4.3, z: zl[i]}, {x: -3.9, z: zl[i]}, {x: -3.4, z: zl[j]}, {x: xe(zl[j]), z: zl[j]}];
+          return {ph: ph, up: up, dn: dn};
+        });
+      },
+      sensor: [{x: 5.9, z: -2.25}, {x: 5.9, z: 2.25}], zone: {x: 0.6, z: 3.85}};
+  }
+  const mc = {x: 0, z: -2.6}, xl = [-3.1, -2.7, -2.3], px = [-3.4, -2.7, -2.0];
+  const ze = x => mc.z + Math.sqrt(R * R - (x - mc.x) * (x - mc.x)) - 0.03;
+  return {bw: 9.4, bd: 13, mc: mc,
+    ch: {supply: {x: -2.7, z: 4.6, w: 2.6, d: 1.4, nm: 'SUPPLY'}, leads: {x: -2.7, z: 2.2, w: 2.6, d: 1.3, nm: 'LEADS'},
+      tach: {x: 2.6, z: 1.6, w: 2.8, d: 1.4, nm: 'TACH'}, slip: {x: 2.6, z: 3.4, w: 2.8, d: 1.4, nm: 'SLIP'}, fr: {x: 2.6, z: 5.2, w: 2.8, d: 1.4, nm: 'ROTOR fr'}},
+    lines(dir) {
+      return ['A', 'B', 'C'].map((ph, i) => {
+        const j = dir < 0 && i > 0 ? 3 - i : i;
+        const up = [{x: px[i], z: 3.9}, {x: px[i], z: 2.85}];
+        const dn = j === i ? [{x: xl[i], z: 1.55}, {x: xl[i], z: ze(xl[i])}]
+          : [{x: xl[i], z: 1.55}, {x: xl[i], z: 1.2}, {x: xl[j], z: 0.75}, {x: xl[j], z: ze(xl[j])}];
+        return {ph: ph, up: up, dn: dn};
+      });
+    },
+    sensor: [{x: 2.6, z: 2.3}, {x: 2.6, z: 4.5}], zone: null};
+}
+
+const INFO = {
+  coils: S => '<b>Stator coils.</b> Copper windings set in slots around the stator, ' + (3 * S.poles) + ' coil groups for ' + S.poles + ' poles. Each phase has its own color. The phase currents peak one after another, 120 degrees apart, so the brightest coils move around the stator. That moving pattern of magnetism is the rotating magnetic field.',
+  stator: S => '<b>Stator core.</b> A stack of thin steel sheets (laminations) that holds the coils and carries the magnetic flux around the outside of the motor. Thin, insulated sheets keep eddy current losses low. The stator never moves.',
+  field: S => '<b>Rotating magnetic field.</b> Each green arrow points to a north pole (N); S marks a south pole. The field turns at the synchronous speed, Ns = 120 × ' + S.f + ' / ' + S.poles + ' = ' + nsOf(S) + ' RPM, shown here 100 times slower. Its strength stays about the same. What changes as the motor speeds up is how fast it slides past the rotor bars.',
+  rotor: S => '<b>Rotor core.</b> Laminated steel pressed on the shaft. It carries the field\'s flux through the rotor and holds the bars in slots. The purple line is a mark painted on the rotor so you can see it turn.',
+  bars: S => '<b>Rotor bars.</b> Aluminum or copper bars in the rotor slots. As the field cuts across them, a voltage is induced (Faraday\'s law), and because the end rings short them together, a current flows. The light blue glow is that current: it follows the field, not the bars, and it sweeps across the bars at the rotor frequency.',
+  rings: S => '<b>End rings.</b> Rings at each end of the rotor that short all the bars together. Bars plus end rings look like an exercise wheel for a pet, which is why this is called a squirrel-cage rotor. There are no brushes and no electrical connection to the rotor.',
+  shaft: S => '<b>Shaft.</b> Carries the torque out to the load, such as a compressor or a conveyor. The tachometer reads its speed, Nr. On the trainer, reflective tape on the shaft gives the optical tachometer something to count.',
+  supply: S => '<b>Three-phase supply.</b> Three voltages of the same frequency, each one 120 degrees after the one before. The frequency sets the synchronous speed: at ' + S.f + ' Hz a ' + S.poles + '-pole motor has Ns = ' + nsOf(S) + ' RPM.',
+  leads: S => '<b>Motor leads T1, T2, T3.</b> Where the supply connects to the motor windings. Swapping any two leads changes the phase order (A-B-C becomes A-C-B) and reverses the motor. On the job, do it only with the power off and locked out.',
+  tach: S => '<b>Tachometer.</b> Reads the rotor speed Nr in RPM. In the lab this is the optical (laser) tachometer aimed at reflective tape on the shaft. Subtract it from Ns to get the slip speed.',
+  slip: S => '<b>Slip readout.</b> s = (Ns - Nr) / Ns, shown as a percent. Slip speed is Ns - Nr: how fast the field passes the rotor. Slip is 100% at standstill and about 4% at full load.',
+  fr: S => '<b>Rotor frequency readout.</b> fr = s × f, the frequency of the voltage and current in the rotor bars. It equals the supply frequency at standstill and falls to about 2.5 Hz at full load on a 60 Hz supply.'
+};
+const PART_ORDER = [['coils', 'Stator coils'], ['stator', 'Stator core'], ['field', 'Field'], ['rotor', 'Rotor core'], ['bars', 'Rotor bars'], ['rings', 'End rings'], ['shaft', 'Shaft'], ['supply', 'Supply'], ['leads', 'Leads']];
+
+function Graphics3D(stage) {
+  const narrow = stage.clientWidth < 600;
+  const lab = Lab3D(stage, {board: {w: 15, d: 9.4, cz: 0, silk: 'CBT TECHNOLOGY INSTITUTE  LSN-MOTORS  BISCAYNE COLD STORAGE  MEDLEY FL', seed: 23},
+    views: {overview: {pos: narrow ? [0, 19, 7] : [0, 12.5, 10.5], tgt: [0, 0, 0.2], want: 1.5},
+      motor: {pos: [1.2, 8.2, 6.6], tgt: [0.6, 0.5, 0], want: 1.1},
+      top: {pos: [0.6, 13.5, 0.8], tgt: [0.6, 0, 0], want: 1.0}}});
+  if (!lab) return null;
+  const T = lab.T, C = h => new T.Color(h).convertSRGBToLinear(), scene = lab.scene, Lo = layoutOf(false), mc = Lo.mc, R = lab.recs, unit = lab.unit;
+  const mats = {A: lab.busMat(COL.A), B: lab.busMat(COL.B), C: lab.busMat(COL.C)};
+  const grab = fn => { const n0 = scene.children.length; fn(); return scene.children.slice(n0); };
+  Lo.lines(1).forEach(l => lab.trace(l.up, 1, mats[l.ph]));
+  const dnF = grab(() => Lo.lines(1).forEach(l => lab.trace(l.dn, 1, mats[l.ph])));
+  const dnR = grab(() => Lo.lines(-1).forEach(l => lab.trace(l.dn, 1, mats[l.ph])));
+  dnR.forEach(m => { m.visible = false; });
+  lab.trace(Lo.sensor, 2, lab.busMat(COL.mark));
+  Object.keys(Lo.ch).forEach(k => lab.chip(k, Lo.ch[k]));
+  lab.finishPins();
+  const zStator = lab.zone('stator · 4 poles', Lo.zone.x, Lo.zone.z, COL.A);
+
+  // the motor: stator ring, coils, rotor with bars and end rings, shaft, field arrows
+  const motor = new T.Group(); motor.position.set(mc.x, 0, mc.z); scene.add(motor);
+  const shape = new T.Shape(); shape.absarc(0, 0, GEO.rOut, 0, Math.PI * 2, false);
+  const hole = new T.Path(); hole.absarc(0, 0, GEO.rBore, 0, Math.PI * 2, true); shape.holes.push(hole);
+  const statorMat = new T.MeshStandardMaterial({color: C(0x3a4690), roughness: .45, metalness: .45, emissive: C(COL.A), emissiveIntensity: 0});
+  const stator = new T.Mesh(new T.ExtrudeGeometry(shape, {depth: 0.72, bevelEnabled: false, curveSegments: 72}), statorMat);
+  stator.rotation.x = -Math.PI / 2; stator.castShadow = true; stator.receiveShadow = true; stator.userData.part = 'stator'; motor.add(stator);
+  const lamMat = new T.MeshStandardMaterial({color: C(0x8a7a3a), roughness: .5, metalness: .7});
+  [0.14, 0.28, 0.42, 0.56].forEach(y => { const t = new T.Mesh(new T.TorusGeometry(GEO.rOut + 0.005, 0.012, 6, 96), lamMat); t.rotation.x = Math.PI / 2; t.position.y = y; motor.add(t); });
+  const rim = new T.Mesh(new T.RingGeometry(GEO.rOut - 0.09, GEO.rOut, 96), new T.MeshBasicMaterial({color: C(COL.A), transparent: true, opacity: .55}));
+  rim.rotation.x = -Math.PI / 2; rim.position.y = 0.725; motor.add(rim);
+
+  let coilG = null, coils = [];
+  function buildCoils(P, dir) {
+    if (coilG) { motor.remove(coilG); coils.forEach(c => c.mat.dispose()); }
+    coilG = new T.Group(); motor.add(coilG); coils = [];
+    const n = 3 * P, pitch = 2 * Math.PI / n, w = Math.min(0.62, GEO.rCoil * pitch * 0.74);
+    for (let k = 0; k < n; k++) {
+      const a = k * pitch, ph = coilPhase(k, dir);
+      const mat = new T.MeshStandardMaterial({color: C(COL[ph]).multiplyScalar(0.3), emissive: C(COL[ph]), emissiveIntensity: 0.3, roughness: .5, metalness: .25});
+      const m = new T.Mesh(unit, mat); m.scale.set(0.44, 1.02, w);
+      m.position.set(Math.cos(a) * GEO.rCoil, 0.5, Math.sin(a) * GEO.rCoil); m.rotation.y = -a;
+      m.castShadow = true; m.userData.part = 'coils'; coilG.add(m);
+      coils.push({m: m, mat: mat, k: k});
+    }
+  }
+  function recolor(dir) { coils.forEach(c => { const ph = coilPhase(c.k, dir); c.mat.color.copy(C(COL[ph])).multiplyScalar(0.3); c.mat.emissive.copy(C(COL[ph])); }); }
+
+  const rotor = new T.Group(); motor.add(rotor);
+  const coreMat = new T.MeshStandardMaterial({color: C(0x3b437c), roughness: .4, metalness: .6, emissive: C(COL.mark), emissiveIntensity: 0});
+  const core = new T.Mesh(new T.CylinderGeometry(GEO.rRotor - 0.05, GEO.rRotor - 0.05, 0.78, 56), coreMat);
+  core.position.y = 0.43; core.castShadow = true; core.userData.part = 'rotor'; rotor.add(core);
+  const bars = [];
+  for (let j = 0; j < GEO.nBars; j++) {
+    const a = j * 2 * Math.PI / GEO.nBars;
+    const mat = new T.MeshStandardMaterial({color: C(0x8d96ad), roughness: .3, metalness: .8, emissive: C(COL.rotorI), emissiveIntensity: 0});
+    const b = new T.Mesh(unit, mat); b.scale.set(0.15, 0.74, 0.17);
+    b.position.set(Math.cos(a) * (GEO.rRotor - 0.04), 0.43, Math.sin(a) * (GEO.rRotor - 0.04)); b.rotation.y = -a; b.userData.part = 'bars';
+    rotor.add(b); bars.push({m: b, mat: mat, a: a});
+  }
+  const ringMat = new T.MeshStandardMaterial({color: C(0xc4cad6), roughness: .3, metalness: .85});
+  [0.06, 0.82].forEach(y => { const r = new T.Mesh(new T.TorusGeometry(GEO.rRotor - 0.06, 0.075, 10, 72), ringMat); r.rotation.x = Math.PI / 2; r.position.y = y; r.userData.part = 'rings'; rotor.add(r); });
+  const markMat = new T.MeshBasicMaterial({color: C(COL.mark)});
+  const mark = new T.Mesh(unit, markMat); mark.scale.set(1.2, 0.03, 0.13); mark.position.set(0.95, 0.835, 0); rotor.add(mark);
+  const markDot = new T.Mesh(new T.CylinderGeometry(0.11, 0.11, 0.05, 20), markMat); markDot.position.set(1.58, 0.84, 0); rotor.add(markDot);
+  const shaftMat = new T.MeshStandardMaterial({color: C(0xc9ced1), roughness: .25, metalness: .9});
+  const shaft = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 2.0, 28), shaftMat); shaft.position.y = 1.0; shaft.userData.part = 'shaft'; shaft.castShadow = true; rotor.add(shaft);
+  const key = new T.Mesh(unit, new T.MeshStandardMaterial({color: C(0x6c7390), metalness: .6, roughness: .4})); key.scale.set(0.09, 0.5, 0.1); key.position.set(0.23, 1.7, 0); key.userData.part = 'shaft'; rotor.add(key);
+
+  // field: one glowing arrow per north pole, S marks between them
+  const hc = document.createElement('canvas'); hc.width = hc.height = 64;
+  const hg = hc.getContext('2d'), rg = hg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.4, 'rgba(255,255,255,.3)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  hg.fillStyle = rg; hg.fillRect(0, 0, 64, 64);
+  const haloTex = new T.CanvasTexture(hc);
+  const fieldG = new T.Group(); fieldG.position.y = 1.25; motor.add(fieldG);
+  const fieldMat = new T.MeshBasicMaterial({color: C(COL.field)});
+  const tipGeo = new T.ConeGeometry(0.21, 0.46, 20);
+  let fieldEls = [];
+  function buildField(P) {
+    fieldEls.forEach(el => el.remove()); fieldEls = [];
+    while (fieldG.children.length) { const c = fieldG.children[0]; c.traverse(o => { if (o.isSprite) o.material.dispose(); }); fieldG.remove(c); }
+    const np = P / 2, pitch = 2 * Math.PI / np;
+    for (let j = 0; j < np; j++) {
+      const arm = new T.Group(); arm.rotation.y = -j * pitch; fieldG.add(arm);
+      const sh = new T.Mesh(unit, fieldMat); sh.scale.set(1.5, 0.08, 0.16); sh.position.x = 1.1; sh.userData.part = 'field'; arm.add(sh);
+      const tip = new T.Mesh(tipGeo, fieldMat); tip.rotation.z = -Math.PI / 2; tip.position.x = 2.05; tip.userData.part = 'field'; arm.add(tip);
+      const halo = new T.Sprite(new T.SpriteMaterial({map: haloTex, color: C(COL.field), blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: .9}));
+      halo.scale.set(1.4, 1.4, 1); halo.position.x = 2.0; arm.add(halo);
+      fieldEls.push(lab.label('N', 'pole', 2.55, 0, 0, arm));
+      const a = (j + 0.5) * pitch;
+      fieldEls.push(lab.label('S', 'pole s', 2.5 * Math.cos(a), 0, 2.5 * Math.sin(a), fieldG));
+    }
+  }
+  // slip gap: the arc from the rotor mark forward to the field arrow it is chasing
+  const gapMat = new T.MeshBasicMaterial({color: C(COL.field), transparent: true, opacity: 0.55, side: T.DoubleSide, depthWrite: false});
+  const gap = new T.Mesh(new T.RingGeometry(1.0, 1.34, 2, 1, 0, 0.01), gapMat); gap.rotation.x = -Math.PI / 2; gap.position.y = 0.9; motor.add(gap);
+  let lastGap = [9, 9];
+  function setGap(a0, a1) {
+    if (Math.abs(a0 - lastGap[0]) < 0.003 && Math.abs(a1 - lastGap[1]) < 0.003) return;
+    lastGap = [a0, a1]; gap.geometry.dispose();
+    const len = Math.max(0.002, a1 - a0);
+    gap.geometry = new T.RingGeometry(1.0, 1.34, Math.max(2, Math.ceil(len * 14)), 1, -a1, len);
+  }
+
+  // clicks on the motor parts (the kit handles the chips)
+  const lblEl = stage.querySelector('.labels'), ray = new T.Raycaster(), mv = new T.Vector2(); let dn = null;
+  lblEl.addEventListener('pointerdown', e => { dn = [e.clientX, e.clientY]; });
+  lblEl.addEventListener('pointerup', e => {
+    if (!dn || Math.hypot(e.clientX - dn[0], e.clientY - dn[1]) > 5) return;
+    const r = lblEl.getBoundingClientRect();
+    mv.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mv, lab.camera);
+    const list = []; motor.traverse(o => { if (o.isMesh && o.userData.part && o.visible) list.push(o); });
+    const hit = ray.intersectObjects(list, false)[0];
+    if (hit && api.onPick) api.onPick(hit.object.userData.part);
+  });
+  lab.onPick(k => api.onPick && api.onPick(k));
+  lab.intro();
+
+  let curP = 0, curDir = 0;
+  function pulse(k) {
+    if (RM || !window.gsap) return;
+    const obj = k === 'coils' ? coilG : k === 'field' ? fieldG : (k === 'stator' ? null : rotor);
+    if (k === 'stator') { gsap.fromTo(statorMat, {emissiveIntensity: 0.45}, {emissiveIntensity: 0, duration: 1.2}); return; }
+    if (k === 'rotor' || k === 'bars') gsap.fromTo(coreMat, {emissiveIntensity: 0.5}, {emissiveIntensity: 0, duration: 1.2});
+    if (obj) gsap.fromTo(obj.scale, {x: 1.06, y: 1.3, z: 1.06}, {x: 1, y: 1, z: 1, duration: 0.7, ease: 'elastic.out(1,0.5)'});
+  }
+  const api = {kind: '3d', onPick: null,
+    flyPhases(S) {
+      const tl = gsap.timeline();
+      Lo.lines(S.dir).forEach((l, i) => tl.add(lab.fly(l.up.concat(l.dn), l.ph, COL[l.ph], {y: 0.7, dur: 1.4}), i * 0.15));
+      Object.keys(mats).forEach(p => lab.glowBus(mats[p]));
+      return tl;
+    },
+    hi(k, c) { if (R[k]) lab.hi(R[k], c); else pulse(k); },
+    clear: () => lab.clear(), clearPackets: () => lab.clearPackets(),
+    focus: (x, z) => lab.focusOn(x, z, 8.5), view: n => lab.setView(n),
+    spin(phi, rho, M, S) {
+      fieldG.rotation.y = -phi; rotor.rotation.y = -rho;
+      const pp = S.poles / 2, cg = 0.35 + 0.65 * Math.min(1, M.iRatio / 4.42);
+      coils.forEach(c => { c.mat.emissiveIntensity = 0.05 + 1.0 * Math.abs(Math.cos(pp * phi - c.k * Math.PI / 3)) * cg; });
+      const amp = Math.sqrt(Math.min(1, M.i2 / 4.9)), lag = S.dir * Math.atan(Math.abs(M.s) * MODEL.X20 / MODEL.R2);
+      bars.forEach(b => { const v = Math.cos(pp * (rho + b.a - phi) + lag); b.mat.emissiveIntensity = 2.4 * amp * v * v; });
+      const pitch = 2 * Math.PI / pp, g = S.dir > 0 ? mod(phi - rho, pitch) : mod(rho - phi, pitch);
+      if (S.dir > 0) setGap(rho, rho + g); else setGap(rho - g, rho);
+    },
+    update(S, M) {
+      if (S.poles !== curP) { curP = S.poles; buildCoils(curP, S.dir); buildField(curP); zStator.textContent = 'stator · ' + curP + ' poles'; }
+      if (S.dir !== curDir) { curDir = S.dir; dnF.forEach(m => { m.visible = curDir > 0; }); dnR.forEach(m => { m.visible = curDir < 0; }); recolor(curDir); }
+      R.supply.val.textContent = S.f + ' Hz'; R.supply.sub.textContent = 'Ns ' + Math.round(M.ns) + ' RPM';
+      R.leads.val.textContent = S.dir > 0 ? 'A B C' : 'A C B'; R.leads.sub.textContent = S.dir > 0 ? 'forward' : 'B and C swapped';
+      R.tach.val.textContent = Math.round(Math.abs(M.u)) + ' RPM'; R.tach.sub.textContent = dirText(S, M);
+      R.slip.val.textContent = (M.s * 100).toFixed(2) + '%'; R.slip.sub.textContent = 'gap ' + Math.round(M.slipRpm) + ' RPM';
+      R.fr.val.textContent = fmtHz(M.fr) + ' Hz'; R.fr.sub.textContent = 's × ' + S.f + ' Hz';
+    }
+  };
+  return api;
+}
+
+function Graphics2D(stage) {
+  const portrait = stage.clientWidth < stage.clientHeight * 0.95;
+  if (portrait) stage.classList.add('flat-portrait');
+  const Lo = layoutOf(portrait), U = 40, W = Lo.bw * U + 40, H = Lo.bd * U + 24, mc = Lo.mc;
+  const X = x => (x + Lo.bw / 2) * U + 20, Y = z => (z + Lo.bd / 2) * U + 12;
+  const svg = document.createElementNS(SVGNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'flat'); svg.setAttribute('role', 'group');
+  svg.setAttribute('aria-label', 'Flat end view of the motor: stator coils, rotating field arrows, rotor bars, the supply, the leads, and the readouts');
+  stage.appendChild(svg);
+  const el = (t, a, p) => { const e = document.createElementNS(SVGNS, t); Object.keys(a).forEach(k => e.setAttribute(k, a[k])); (p || svg).appendChild(e); return e; };
+  const defs = el('defs', {});
+  const flt = el('filter', {id: 'glow2d', x: '-50%', y: '-50%', width: '200%', height: '200%'}, defs);
+  el('feGaussianBlur', {stdDeviation: 2.4, result: 'b'}, flt);
+  const fm = el('feMerge', {}, flt); el('feMergeNode', {in: 'b'}, fm); el('feMergeNode', {in: 'SourceGraphic'}, fm);
+  el('rect', {x: 4, y: 4, width: W - 8, height: H - 8, rx: 12, fill: '#1a2257', stroke: '#3a4690'});
+  const pts = p => p.map(q => X(q.x).toFixed(1) + ',' + Y(q.z).toFixed(1)).join(' ');
+  const gF = el('g', {}), gR = el('g', {style: 'display:none'});
+  Lo.lines(1).forEach(l => el('polyline', {points: pts(l.up), fill: 'none', stroke: COL[l.ph], 'stroke-width': 3, 'stroke-opacity': .75}));
+  Lo.lines(1).forEach(l => el('polyline', {points: pts(l.dn), fill: 'none', stroke: COL[l.ph], 'stroke-width': 3, 'stroke-opacity': .75}, gF));
+  Lo.lines(-1).forEach(l => el('polyline', {points: pts(l.dn), fill: 'none', stroke: COL[l.ph], 'stroke-width': 3, 'stroke-opacity': .75}, gR));
+  el('polyline', {points: pts(Lo.sensor), fill: 'none', stroke: COL.mark, 'stroke-width': 4, 'stroke-opacity': .4});
+  const chips = {};
+  Object.keys(Lo.ch).forEach(k => {
+    const c = Lo.ch[k], g = el('g', {class: 'part', 'data-k': k, tabindex: 0, role: 'button', 'aria-label': 'Learn about: ' + c.nm.toLowerCase()});
+    const body = el('rect', {class: 'body', x: X(c.x - c.w / 2), y: Y(c.z - c.d / 2), width: c.w * U, height: c.d * U, rx: 5, fill: '#161a2e', stroke: '#4a5490', 'stroke-width': 1.5}, g);
+    el('text', {class: 'lbl2', x: X(c.x), y: Y(c.z - c.d / 2) + 14, 'text-anchor': 'middle'}, g).textContent = c.nm;
+    const v = el('text', {class: 'val2', x: X(c.x), y: Y(c.z) + 7, 'text-anchor': 'middle'}, g);
+    const s = el('text', {class: 'sub2', x: X(c.x), y: Y(c.z + c.d / 2) - 6, 'text-anchor': 'middle'}, g);
+    chips[k] = {body: body, v: v, s: s};
+  });
+  const R = GEO.rOut * U, Rb = GEO.rBore * U, Rc = GEO.rCoil * U, Rr = GEO.rRotor * U;
+  const motor = el('g', {transform: 'translate(' + X(mc.x) + ' ' + Y(mc.z) + ')'});
+  const ring = (r) => 'M' + r + ' 0A' + r + ' ' + r + ' 0 1 0 ' + (-r) + ' 0A' + r + ' ' + r + ' 0 1 0 ' + r + ' 0Z';
+  const statorG = el('g', {class: 'part', 'data-k': 'stator', tabindex: 0, role: 'button', 'aria-label': 'Learn about: stator core'}, motor);
+  const statorP = el('path', {class: 'body', d: ring(R) + ring(Rb), 'fill-rule': 'evenodd', fill: '#2c3672', stroke: '#4a5490', 'stroke-width': 1.5}, statorG);
+  el('circle', {r: R - 3, fill: 'none', stroke: COL.A, 'stroke-opacity': .5, 'stroke-width': 2, 'pointer-events': 'none'}, motor);
+  const coilG = el('g', {class: 'part', 'data-k': 'coils', tabindex: 0, role: 'button', 'aria-label': 'Learn about: stator coils'}, motor);
+  const rotorG = el('g', {}, motor);
+  const coreC = el('circle', {class: 'part body', 'data-k': 'rotor', r: Rr - 2, fill: '#3b437c', stroke: '#4a5490', 'stroke-width': 1.5, tabindex: 0, role: 'button', 'aria-label': 'Learn about: rotor core'}, rotorG);
+  const barG = el('g', {class: 'part', 'data-k': 'bars', tabindex: 0, role: 'button', 'aria-label': 'Learn about: rotor bars'}, rotorG);
+  const bars = [];
+  for (let j = 0; j < GEO.nBars; j++) {
+    const a = j * 2 * Math.PI / GEO.nBars, g = el('g', {transform: 'rotate(' + (a * 180 / Math.PI).toFixed(2) + ') translate(' + (Rr - 8) + ' 0)'}, barG);
+    el('rect', {x: -6, y: -4, width: 12, height: 8, rx: 2, fill: '#8d96ad'}, g);
+    bars.push({a: a, glow: el('rect', {x: -6, y: -4, width: 12, height: 8, rx: 2, fill: COL.rotorI, 'fill-opacity': 0, filter: 'url(#glow2d)'}, g)});
+  }
+  el('circle', {class: 'part', 'data-k': 'rings', r: Rr - 8, fill: 'none', stroke: '#c4cad6', 'stroke-opacity': .55, 'stroke-width': 3, tabindex: 0, role: 'button', 'aria-label': 'Learn about: end rings'}, rotorG);
+  el('line', {x1: 0.3 * U, y1: 0, x2: 1.5 * U, y2: 0, stroke: COL.mark, 'stroke-width': 5, 'stroke-linecap': 'round', 'pointer-events': 'none'}, rotorG);
+  el('circle', {cx: 1.55 * U, cy: 0, r: 5, fill: COL.mark, 'pointer-events': 'none'}, rotorG);
+  const shaftG = el('g', {class: 'part', 'data-k': 'shaft', tabindex: 0, role: 'button', 'aria-label': 'Learn about: shaft'}, rotorG);
+  el('circle', {r: 0.24 * U, fill: '#c9ced1', stroke: '#6c7390', 'stroke-width': 1.5}, shaftG);
+  el('rect', {x: 0.12 * U, y: -3, width: 6, height: 6, fill: '#6c7390'}, shaftG);
+  const gapP = el('path', {fill: COL.field, 'fill-opacity': .45, 'pointer-events': 'none'}, motor);
+  const fieldG = el('g', {class: 'part', 'data-k': 'field', tabindex: 0, role: 'button', 'aria-label': 'Learn about: rotating magnetic field'}, motor);
+  const pk = el('g', {});
+  let coils = [], curP = 0, curDir = 0;
+  function buildCoils(P, dir) {
+    while (coilG.firstChild) coilG.removeChild(coilG.firstChild);
+    coils = [];
+    const n = 3 * P, pitch = 2 * Math.PI / n, w = Math.min(0.62, GEO.rCoil * pitch * 0.74) * U;
+    for (let k = 0; k < n; k++) {
+      const a = k * pitch, ph = coilPhase(k, dir);
+      const g = el('g', {transform: 'rotate(' + (a * 180 / Math.PI).toFixed(2) + ') translate(' + Rc + ' 0)'}, coilG);
+      const r = el('rect', {x: -0.22 * U, y: -w / 2, width: 0.44 * U, height: w, rx: 3, fill: COL[ph], 'fill-opacity': .3, stroke: COL[ph], 'stroke-width': 1.2}, g);
+      let t = null;
+      if (P <= 4) {
+        t = el('text', {x: Math.cos(a) * 2.95 * U, y: Math.sin(a) * 2.95 * U + 3.5, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: COL[ph], 'pointer-events': 'none'}, coilG);
+        t.textContent = coilPhase(k, dir) + (PRIME[k % 6] ? "'" : '');
+      }
+      coils.push({r: r, t: t, k: k});
+    }
+  }
+  function recolor(dir) { coils.forEach(c => { const ph = coilPhase(c.k, dir); c.r.setAttribute('fill', COL[ph]); c.r.setAttribute('stroke', COL[ph]); if (c.t) { c.t.setAttribute('fill', COL[ph]); c.t.textContent = ph + (PRIME[c.k % 6] ? "'" : ''); } }); }
+  function buildField(P) {
+    while (fieldG.firstChild) fieldG.removeChild(fieldG.firstChild);
+    const np = P / 2, pitch = 360 / np;
+    for (let j = 0; j < np; j++) {
+      const g = el('g', {transform: 'rotate(' + (j * pitch) + ')', filter: 'url(#glow2d)'}, fieldG);
+      el('line', {x1: 0.36 * U, y1: 0, x2: 1.8 * U, y2: 0, stroke: COL.field, 'stroke-width': 5, 'stroke-linecap': 'round'}, g);
+      el('polygon', {points: (1.75 * U) + ',-9 ' + (2.25 * U) + ',0 ' + (1.75 * U) + ',9', fill: COL.field}, g);
+      el('text', {x: 2.5 * U, y: 4, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: COL.field}, g).textContent = 'N';
+      const a = (j + 0.5) * pitch * Math.PI / 180;
+      el('text', {x: (2.45 * U * Math.cos(a)).toFixed(1), y: (2.45 * U * Math.sin(a) + 4).toFixed(1), 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: COL.B}, fieldG).textContent = 'S';
+    }
+  }
+  function sector(a0, a1, r1, r2) {
+    const big = a1 - a0 > Math.PI ? 1 : 0, c = Math.cos, s = Math.sin;
+    return 'M' + (r2 * c(a0)).toFixed(1) + ' ' + (r2 * s(a0)).toFixed(1) + 'A' + r2 + ' ' + r2 + ' 0 ' + big + ' 1 ' + (r2 * c(a1)).toFixed(1) + ' ' + (r2 * s(a1)).toFixed(1) +
+      'L' + (r1 * c(a1)).toFixed(1) + ' ' + (r1 * s(a1)).toFixed(1) + 'A' + r1 + ' ' + r1 + ' 0 ' + big + ' 0 ' + (r1 * c(a0)).toFixed(1) + ' ' + (r1 * s(a0)).toFixed(1) + 'Z';
+  }
+  svg.addEventListener('click', e => { const p = e.target.closest('[data-k]'); if (p && api.onPick) api.onPick(p.dataset.k); });
+  svg.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const p = e.target.closest('[data-k]'); if (!p) return;
+    e.preventDefault(); e.stopPropagation(); if (api.onPick) api.onPick(p.dataset.k);
+  });
+  const hiable = Object.assign({stator: statorP, rotor: coreC}, Object.fromEntries(Object.keys(chips).map(k => [k, chips[k].body])));
+  function fly(path, text, color, dur) {
+    if (!hasGSAP) return null;
+    const P2 = path.map(q => [X(q.x), Y(q.z)]), segs = []; let L = 0;
+    for (let i = 1; i < P2.length; i++) { const d = Math.hypot(P2[i][0] - P2[i - 1][0], P2[i][1] - P2[i - 1][1]); segs.push(d); L += d; }
+    const g = el('g', {}, pk); el('circle', {r: 7, fill: color, filter: 'url(#glow2d)'}, g);
+    el('text', {y: -11, 'text-anchor': 'middle', fill: color, 'font-size': 12, 'font-weight': 700}, g).textContent = text;
+    const o = {t: 0};
+    const place = () => { let d = o.t * L, i = 0; while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; } const f = segs[i] ? Math.min(1, d / segs[i]) : 0;
+      g.setAttribute('transform', 'translate(' + (P2[i][0] + (P2[i + 1][0] - P2[i][0]) * f).toFixed(1) + ' ' + (P2[i][1] + (P2[i + 1][1] - P2[i][1]) * f).toFixed(1) + ')'); };
+    place();
+    return gsap.timeline({onComplete: () => g.remove()}).to(o, {t: 1, duration: dur, ease: 'none', onUpdate: place});
+  }
+  const api = {kind: '2d', onPick: null,
+    flyPhases(S) { const tl = gsap.timeline(); Lo.lines(S.dir).forEach((l, i) => { const f = fly(l.up.concat(l.dn), l.ph, COL[l.ph], 1.4); if (f) tl.add(f, i * 0.15); }); return tl; },
+    hi(k, c) { const b = hiable[k]; if (b) { b.setAttribute('stroke', c); b.setAttribute('stroke-width', 3); } },
+    clear() { Object.values(hiable).forEach(b => { b.setAttribute('stroke', '#4a5490'); b.setAttribute('stroke-width', 1.5); }); },
+    clearPackets() { while (pk.firstChild) pk.removeChild(pk.firstChild); }, focus() {}, view() {},
+    spin(phi, rho, M, S) {
+      fieldG.setAttribute('transform', 'rotate(' + (phi * 180 / Math.PI).toFixed(2) + ')');
+      rotorG.setAttribute('transform', 'rotate(' + (rho * 180 / Math.PI).toFixed(2) + ')');
+      const pp = S.poles / 2, cg = 0.35 + 0.65 * Math.min(1, M.iRatio / 4.42);
+      coils.forEach(c => c.r.setAttribute('fill-opacity', (0.12 + 0.85 * Math.abs(Math.cos(pp * phi - c.k * Math.PI / 3)) * cg).toFixed(3)));
+      const amp = Math.sqrt(Math.min(1, M.i2 / 4.9)), lag = S.dir * Math.atan(Math.abs(M.s) * MODEL.X20 / MODEL.R2);
+      bars.forEach(b => { const v = Math.cos(pp * (rho + b.a - phi) + lag); b.glow.setAttribute('fill-opacity', (amp * v * v).toFixed(3)); });
+      const pitch = 2 * Math.PI / pp, g = S.dir > 0 ? mod(phi - rho, pitch) : mod(rho - phi, pitch);
+      const a0 = S.dir > 0 ? rho : rho - g, a1 = S.dir > 0 ? rho + g : rho;
+      gapP.setAttribute('d', a1 - a0 < 0.002 ? '' : sector(a0, a1, 1.0 * U, 1.34 * U));
+    },
+    update(S, M) {
+      if (S.poles !== curP) { curP = S.poles; buildCoils(curP, S.dir); buildField(curP); }
+      if (S.dir !== curDir) { curDir = S.dir; gF.style.display = curDir > 0 ? '' : 'none'; gR.style.display = curDir < 0 ? '' : 'none'; recolor(curDir); }
+      chips.supply.v.textContent = S.f + ' Hz'; chips.supply.s.textContent = 'Ns ' + Math.round(M.ns) + ' RPM';
+      chips.leads.v.textContent = S.dir > 0 ? 'A B C' : 'A C B'; chips.leads.s.textContent = S.dir > 0 ? 'forward' : 'B and C swapped';
+      chips.tach.v.textContent = Math.round(Math.abs(M.u)) + ' RPM'; chips.tach.s.textContent = dirText(S, M);
+      chips.slip.v.textContent = (M.s * 100).toFixed(2) + '%'; chips.slip.s.textContent = 'gap ' + Math.round(M.slipRpm) + ' RPM';
+      chips.fr.v.textContent = fmtHz(M.fr) + ' Hz'; chips.fr.s.textContent = 's × ' + S.f + ' Hz';
+    }
+  };
+  return api;
+}
+function dirText(S, M) {
+  if (Math.abs(M.u) < 0.5) return 'stopped';
+  if (M.u < 0) return 'against the field';
+  return S.dir > 0 ? 'forward' : 'reverse';
+}
+
+// ---- charts: torque and line current against rotor speed (inline SVG) ----
+const CW = 340, CHH = 150, PL = 38, PR = 12, PT = 12, PB = 30;
+const cxp = (u, ns) => PL + Math.max(0, Math.min(1, u / ns)) * (CW - PL - PR);
+const cyp = (v, vmax) => PT + (1 - Math.max(0, Math.min(v, vmax)) / vmax) * (CHH - PT - PB);
+function drawChart(kind) {
+  const svg = $(kind === 't' ? '#chartT' : '#chartI'), ns = nsOf(S), L = loadTorque(S.load), nop = operatingSpeed(ns, L);
+  const vmax = kind === 't' ? 2.8 : 5, ticks = kind === 't' ? [0, 1, 2] : [0, 1, 2, 3, 4];
+  const fn = kind === 't' ? (u => torque(slipOf(ns, u))) : (u => lineCurrentRatio(slipOf(ns, u)));
+  let h = '';
+  ticks.forEach(v => { const y = cyp(v, vmax).toFixed(1); h += '<line x1="' + PL + '" x2="' + (CW - PR) + '" y1="' + y + '" y2="' + y + '" class="gl' + (v === 0 ? ' ax' : '') + '"/><text x="' + (PL - 5) + '" y="' + (+y + 3.5) + '" text-anchor="end" class="tk">' + v + '×</text>'; });
+  [0, 0.25, 0.5, 0.75, 1].forEach(q => { const x = cxp(q * ns, ns).toFixed(1); h += '<line x1="' + x + '" x2="' + x + '" y1="' + PT + '" y2="' + (CHH - PB) + '" class="gl"/><text x="' + x + '" y="' + (CHH - PB + 12) + '" text-anchor="middle" class="tk">' + Math.round(q * ns) + '</text>'; });
+  h += '<text x="' + ((PL + CW - PR) / 2) + '" y="' + (CHH - 4) + '" text-anchor="middle" class="axt">rotor speed, RPM</text>';
+  h += '<text transform="translate(10 ' + ((PT + CHH - PB) / 2) + ') rotate(-90)" text-anchor="middle" class="axt">' + (kind === 't' ? 'torque, × rated' : 'current, × FLA') + '</text>';
+  let d = '';
+  for (let i = 0; i <= 180; i++) { const u = ns * i / 180; d += (i ? 'L' : 'M') + cxp(u, ns).toFixed(1) + ' ' + cyp(fn(u), vmax).toFixed(1); }
+  h += '<path d="' + d + '" class="cv ' + kind + '"/>';
+  if (kind === 't') {
+    let dl = '';
+    for (let i = 0; i <= 60; i++) { const u = ns * i / 60; dl += (i ? 'L' : 'M') + cxp(u, ns).toFixed(1) + ' ' + cyp(loadAt(u, L, nop), vmax).toFixed(1); }
+    h += '<path d="' + dl + '" class="ld"/>';
+    const po = ns * (1 - pullOutSlip()), Tm = torque(pullOutSlip());
+    h += '<circle cx="' + cxp(po, ns).toFixed(1) + '" cy="' + cyp(Tm, vmax).toFixed(1) + '" r="3.5" class="po"/><text x="' + (cxp(po, ns) - 6).toFixed(1) + '" y="' + (cyp(Tm, vmax) + 15).toFixed(1) + '" text-anchor="end" class="pot">pull-out ' + f2(Tm) + '×</text>';
+  } else {
+    h += '<line x1="' + PL + '" x2="' + (CW - PR) + '" y1="' + cyp(1, vmax).toFixed(1) + '" y2="' + cyp(1, vmax).toFixed(1) + '" class="fla"/><text x="' + (PL + 4) + '" y="' + (cyp(1, vmax) - 4).toFixed(1) + '" class="tk">FLA = 2.4 A on CV-2</text>';
+  }
+  h += '<g id="' + kind + 'Dot"><line class="dl"/><circle r="5" class="dot"/><text class="dv"></text></g>';
+  svg.innerHTML = h;
+  $('#chartTag').textContent = S.poles + ' poles, ' + S.f + ' Hz, load ' + (S.load === 0 ? 'friction only' : S.load + '%');
+}
+function moveDots(M) {
+  ['t', 'i'].forEach(kind => {
+    const g = $('#' + kind + 'Dot'); if (!g) return;
+    const vmax = kind === 't' ? 2.8 : 5, v = kind === 't' ? M.t : M.iRatio, x = cxp(M.u, M.ns), y = cyp(v, vmax);
+    const c = g.querySelector('circle'), l = g.querySelector('line'), t = g.querySelector('text');
+    c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.setAttribute('class', 'dot' + (M.u < -0.5 ? ' hollow' : ''));
+    l.setAttribute('x1', x.toFixed(1)); l.setAttribute('x2', x.toFixed(1)); l.setAttribute('y1', y.toFixed(1)); l.setAttribute('y2', (CHH - PB).toFixed(1));
+    const right = x < CW - 90;
+    t.setAttribute('x', (x + (right ? 8 : -8)).toFixed(1)); t.setAttribute('y', (right ? (y < 30 ? y + 16 : y - 8) : y + 17).toFixed(1)); t.setAttribute('text-anchor', right ? 'start' : 'end');
+    t.textContent = f2(v) + '×' + (M.u < -0.5 ? ' (against the field)' : '');
+  });
+}
+
+// ---- the three-state matrix ----
+function buildMatrix() {
+  const f = S.f, rows = [
+    ['Slip', '1 (100%)', 'falls from 1 toward 0.04', 'small, about ' + MODEL.S_RATED + ' (4.17%)'],
+    ['Rotor frequency', f + ' Hz, same as the supply', 'falls with the slip', fmtHz(rotorFreq(MODEL.S_RATED, f)) + ' Hz (s × f)'],
+    ['Induced voltage E2', 'highest, E20', 'falls with the slip', 'about 4% of E20'],
+    ['Rotor reactance X2', 'highest, X20', 'falls with the slip', 'very small'],
+    ['Rotor current', 'very high, ' + f2(rotorCurrent(1)) + ' per unit', 'falls', 'near rated, ' + f2(rotorCurrent(MODEL.S_RATED)) + ' per unit'],
+    ['Power factor', 'poor, ' + f2(powerFactor(1)), 'improves, ' + f2(powerFactor(pullOutSlip())) + ' at pull-out', 'high, ' + f2(powerFactor(MODEL.S_RATED))],
+    ['Torque', 'modest, ' + f2(torque(1)) + ' × rated', 'climbs to ' + f2(torque(pullOutSlip())) + ' × rated at pull-out', 'matches the load']
+  ], cols = ['standstill', 'accel', 'full'];
+  $('#mxBody').innerHTML = rows.map(r => '<tr><td>' + r[0] + '</td>' + cols.map((c, i) => '<td data-c="' + c + '">' + r[i + 1] + '</td>').join('') + '</tr>').join('');
+  lastState = null;
+}
+
+// ---- the explanation as micro-steps; each has text, an animation, and a commit that changes the state ----
+const fresh = () => ({poles: +$('#selPoles').value, f: +$('#selFreq').value, load: +$('#selLoad').value, u: 0, dir: 1, phase: null, step: 0});
+const loadWords = load => load === 0 ? 'with no load (friction only, about 0.05 × rated)' : 'at ' + load + '% of rated load';
+const STEPS = [
+  {phase: 'stand',
+    text: s => { const ns = nsOf(s); return 'Standstill. The supply sends three currents, 120 degrees apart, into the stator coils. Together they make a magnetic field that turns at Ns = 120 × ' + s.f + ' / ' + s.poles + ' = ' + ns + ' RPM. The rotor has not moved yet, so the field cuts its bars at the full ' + ns +
+      ' RPM: slip is 1 (100%) and the rotor frequency equals the supply, ' + s.f + ' Hz. By Faraday\'s law, the faster the flux changes, the more voltage is induced, so E2 is at its highest and the rotor current is ' + f2(rotorCurrent(1)) + ' per unit (about ' + lineCurrentRatio(1).toFixed(1) + ' × FLA on the line in this model). At ' + s.f +
+      ' Hz the rotor reactance is large, so the power factor is only ' + f2(powerFactor(1)) + ' and the torque is a modest ' + f2(torque(1)) + ' × rated.'; },
+    anim: (t, s) => { t.call(() => { s.dir = 1; s.u = 0; simActive = false; live(); G.clear(); G.hi('supply', COL.A); G.hi('coils', COL.A); }); const f = G.flyPhases(s); if (f) t.add(f); t.to({}, {duration: 0.3}); },
+    commit: s => { s.dir = 1; s.u = 0; }},
+  {phase: 'accel',
+    text: s => { const ns = nsOf(s), po = Math.round(ns * (1 - pullOutSlip())); return 'Accelerating. The motor torque is larger than the load, so the rotor speeds up and starts to catch the field. The slip speed shrinks, so the bars are cut more slowly: E2, the rotor frequency, the reactance, and the current all fall together. The power factor improves faster than the current drops, and in this model torque = I2 × PF, so the torque climbs from ' +
+      f2(torque(1)) + ' to ' + f2(torque(pullOutSlip())) + ' × rated by ' + po + ' RPM.'; },
+    anim: (t, s) => { t.call(() => { G.clear(); G.hi('tach', COL.A); G.hi('rotor', COL.A); }); t.to(s, {u: nsOf(s) * (1 - pullOutSlip()), duration: 3.4, ease: 'power1.in', onUpdate: live}); },
+    commit: s => { s.u = nsOf(s) * (1 - pullOutSlip()); }},
+  {phase: 'pull',
+    text: s => { const ns = nsOf(s), sp = pullOutSlip(); return 'Pull-out. At ' + Math.round(ns * (1 - sp)) + ' RPM the slip is ' + sp + ' (20%) and the rotor frequency is ' + fmtHz(rotorFreq(sp, s.f)) + ' Hz. The rotor reactance, ' + sp + ' × ' + f2(MODEL.X20) + ' = ' + f2(rotorReactance(sp)) + ' per unit, now equals the rotor resistance (' + f2(MODEL.R2) +
+      '), and the torque reaches its maximum: ' + f2(torque(sp)) + ' × rated, with a power factor of ' + f2(powerFactor(sp)) + '. This is the pull-out (breakdown) torque. A load that needs more than this stalls the motor.'; },
+    anim: (t, s) => { t.call(() => { G.clear(); G.hi('slip', COL.B); G.hi('field', COL.B); }); t.to({}, {duration: 1.4}); },
+    commit: s => {}},
+  {phase: 'full',
+    text: s => { const ns = nsOf(s), n = nopOf(s), sl = slipOf(ns, n), L = loadTorque(s.load); return 'Full speed ' + loadWords(s.load) + '. Past pull-out the torque falls quickly as the slip shrinks, and the rotor settles at ' + n + ' RPM, where the motor torque matches the load torque (' + f2(L) + ' × rated). Slip is (' + ns + ' - ' + n + ') / ' + ns + ' = ' + sl.toFixed(4) +
+      ' (' + (sl * 100).toFixed(2) + '%), so the rotor frequency is only ' + sl.toFixed(4) + ' × ' + s.f + ' = ' + fmtHz(rotorFreq(sl, s.f)) + ' Hz. With so little slip the reactance is tiny, the power factor is ' + f2(powerFactor(sl)) + ', and the line current is about ' + lineCurrentRatio(sl).toFixed(1) + ' × FLA (' + lineCurrent(sl).toFixed(1) +
+      ' A for the 2.4 A conveyor motor). The rotor never reaches ' + ns + ' RPM: with no slip the bars would see no change in flux, so there would be no voltage and no torque.'; },
+    anim: (t, s) => { t.call(() => { G.clear(); G.hi('fr', COL.field); G.hi('tach', COL.field); }); t.to(s, {u: nopOf(s), duration: 2.4, ease: 'power2.out', onUpdate: live}); },
+    commit: s => { s.u = nopOf(s); }},
+  {phase: 'rev',
+    text: s => { const ns = nsOf(s), n = nopOf(s); return 'Reverse. Swapping any two supply leads (here B and C) changes the phase order from A-B-C to A-C-B, so the field turns the other way. On the job you swap leads with the power off and locked out, and the motor then starts in the new direction. Here the swap happens while the motor runs (called plugging) so you can watch: for a moment the rotor turns against the field, the slip jumps to about ' +
+      slipOf(ns, -n).toFixed(2) + ', and the current stays high (' + lineCurrentRatio(slipOf(ns, -n)).toFixed(1) + ' × FLA) while the motor brakes. Then the rotor stops and speeds up to ' + n + ' RPM the other way.'; },
+    anim: (t, s) => { t.call(() => { s.dir = -1; s.u = -s.u; live(); G.clear(); G.hi('leads', COL.C); }); const f = G.flyPhases({dir: -1}); if (f) t.add(f); t.to(s, {u: nopOf(s), duration: 4.2, ease: 'sine.inOut', onUpdate: live}, 0.2); },
+    commit: s => { s.dir = -1; s.u = nopOf(s); }}
+];
+const FOCUS = {stand: [0.6, 0], accel: [0.6, 0], pull: [0.6, 0], full: [0.6, 0], rev: [-1.6, 0.6]};
+let S = fresh(), hist = [], tl = null, running = false, timer = null, speed = 1, follow = true, G = null;
+let simActive = false, simKind = null, spinOn = !RM, phi = 0, rho = 0, cur = null, lastState = null, curPoles = 0;
+const SPEEDS = [0.25, 0.5, 1, 2, 4];
+const STATE_UI = {standstill: ['Standstill', 'var(--ctrl)'], accel: ['Accelerating', 'var(--cbt-gold)'], full: ['Full speed', 'var(--alu)'], braking: ['Braking', 'var(--ctrl)']};
+function setPhase(p) { document.querySelectorAll('.phases li').forEach(li => li.classList.toggle('on', li.dataset.p === p)); const li = document.querySelector('.phases li[data-p="' + p + '"]'); $('#phaseTag').textContent = li ? li.textContent : 'Ready'; $('#phaseTag').style.setProperty('--pc', li ? getComputedStyle(li).getPropertyValue('--c') : 'var(--silk-dim)'); }
+const bar = (id, pct) => { $(id).style.width = Math.max(0, Math.min(100, pct)).toFixed(1) + '%'; };
+
+function relText(M) {
+  if (M.state === 'braking') return 'The rotor turns against the field, so the field passes the bars even faster than at standstill. The motor brakes.';
+  if (M.slipRpm < 0.5) return 'No slip: the bars see no change in flux, so no voltage is induced and there is no torque.';
+  if (M.state === 'standstill') return 'The field passes the stopped bars at the full Ns: the fastest cutting, the most voltage, and ' + fmtHz(M.fr) + ' Hz in the rotor.';
+  if (M.state === 'full') return 'Only ' + Math.round(M.slipRpm) + ' RPM: the field slides past the bars slowly, so little voltage is induced and the rotor frequency is just ' + fmtHz(M.fr) + ' Hz.';
+  return 'The rotor is catching up, so the field passes the bars more slowly than at standstill.';
+}
+function spdNote(M) {
+  if (M.state === 'braking') return 'The rotor turns against the field (slip above 1): the motor brakes.';
+  if (M.slipRpm < 0.5) return 'At Ns the bars see no change in flux: no voltage and no current, so no torque. A motor cannot reach this speed on its own.';
+  if (M.state === 'standstill') return 'Standstill: the field cuts the bars at the full Ns.';
+  if (M.state === 'full') return 'Near full speed: small slip and a low rotor frequency.';
+  return 'Between standstill and full speed. Picture a test brake holding the rotor at this speed.';
+}
+function live() {
+  const M = cur = readings(S);
+  $('#vNs').textContent = Math.round(M.ns); $('#sNs').textContent = '120 × ' + S.f + ' / ' + S.poles;
+  $('#vNr').textContent = Math.round(Math.abs(M.u)); $('#sNr').textContent = dirText(S, M);
+  $('#vS').textContent = M.s.toFixed(4); $('#sS').textContent = (M.s * 100).toFixed(2) + '%';
+  $('#vFr').textContent = fmtHz(M.fr); $('#sFr').textContent = 's × ' + S.f + ' Hz';
+  $('#vE2').textContent = Math.round(M.e2 * 100) + '%'; bar('#bE2', M.e2 * 100);
+  $('#vX2').textContent = M.x2.toFixed(3);
+  $('#vI2').textContent = f2(M.i2); $('#sI2').textContent = 'rated ' + f2(rotorCurrent(MODEL.S_RATED)); bar('#bI2', M.i2 / 4.9 * 100);
+  $('#vIl').textContent = M.iRatio.toFixed(1); $('#sIl').textContent = M.iA.toFixed(1) + ' A'; bar('#bIl', M.iRatio / 4.5 * 100);
+  $('#vPf').textContent = f2(M.pf); $('#sPf').textContent = M.pf >= 0.9 ? 'high' : M.pf >= 0.5 ? 'fair' : 'poor'; bar('#bPf', M.pf * 100);
+  $('#vT').textContent = f2(M.t); $('#sT').textContent = 'load needs ' + f2(Math.abs(M.tLoad)) + ' at this speed'; bar('#bT', M.t / 2.5 * 100);
+  $('#vRel').textContent = Math.round(M.slipRpm) + ' RPM'; $('#tRel').textContent = relText(M);
+  const sp = $('#spd'); sp.max = Math.round(M.ns); sp.value = Math.max(0, Math.min(M.ns, Math.round(M.u)));
+  $('#spdOut').textContent = Math.round(Math.max(0, M.u)) + ' RPM'; $('#spdNote').textContent = spdNote(M);
+  if (M.state !== lastState) {
+    lastState = M.state;
+    document.querySelectorAll('.mx [data-c]').forEach(c => c.classList.toggle('on', c.dataset.c === M.state));
+    const ui = STATE_UI[M.state]; $('#statePill').textContent = ui[0]; $('#statePill').style.setProperty('--c', ui[1]);
+  }
+  $('#mxNow').innerHTML = M.state === 'braking' ? 'Now: <b>braking</b>. The rotor turns against the field (slip ' + M.s.toFixed(2) + '), so no column fits.'
+    : 'Now: <b>' + STATE_UI[M.state][0].toLowerCase() + '</b>, slip ' + M.s.toFixed(4) + ', rotor frequency ' + fmtHz(M.fr) + ' Hz.';
+  moveDots(M);
+  G && G.update(S, M);
+}
+function setupText() {
+  const ns = nsOf(S);
+  $('#nsFormula').innerHTML = 'Ns = 120 × f / P = 120 × ' + S.f + ' / ' + S.poles + ' = <b>' + ns + ' RPM</b><small>' + (S.f === 60 ? 'Biscayne Cold Storage motor with this Ns: ' + MOTORS[S.poles] + '.' : 'A 50 Hz supply, used in many countries outside the Americas, gives 5/6 of the 60 Hz speed.') + '</small>';
+}
+// the field "as seen from the rotor" dial
+let dialArrows = null;
+function buildDial() {
+  const d = $('#dial'), np = S.poles / 2;
+  let h = '<circle r="44" fill="#141a45" stroke="#3a4690"/><circle r="36" fill="#3b437c"/>';
+  for (let j = 0; j < 16; j++) { const a = j * Math.PI / 8; h += '<rect x="-3" y="-2.5" width="6" height="5" rx="1" fill="#8d96ad" transform="rotate(' + (a * 180 / Math.PI) + ') translate(32 0)"/>'; }
+  h += '<line x1="6" y1="0" x2="28" y2="0" stroke="' + COL.mark + '" stroke-width="3" stroke-linecap="round"/><g id="dialArr">';
+  for (let j = 0; j < np; j++) h += '<g transform="rotate(' + (j * 360 / np) + ')"><line x1="5" y1="0" x2="34" y2="0" stroke="' + COL.field + '" stroke-width="3.5" stroke-linecap="round"/><polygon points="32,-6 44,0 32,6" fill="' + COL.field + '"/></g>';
+  h += '</g><circle r="4.5" fill="#c9ced1"/>';
+  d.innerHTML = h; dialArrows = $('#dialArr');
+}
+
+function render() { $('#hudStep').textContent = S.step; $('#ctx').textContent = 'Step ' + S.step + ' of ' + STEPS.length; $('#btnBack').disabled = !hist.length; $('#btnStep').disabled = S.step >= STEPS.length; $('#btnRun').textContent = running ? 'Pause' : 'Run'; refreshSupply(); live(); }
+function refreshSupply() { if (S.poles !== curPoles || S.f + '|' + S.load !== refreshSupply.k) { curPoles = S.poles; refreshSupply.k = S.f + '|' + S.load; setupText(); drawChart('t'); drawChart('i'); buildDial(); buildMatrix(); } }
+function finish(m) { tl = null; m.commit(S); S.step++; render(); if (running) { if (S.step >= STEPS.length) stop(); else timer = setTimeout(stepFwd, 350 / speed); } }
+function stepFwd(animated) {
+  if (tl) { tl.progress(1); return; }
+  if (S.step >= STEPS.length) return;
+  simActive = false;
+  hist.push({poles: S.poles, f: S.f, load: S.load, u: S.u, dir: S.dir, phase: S.phase, step: S.step});   // data only (GSAP adds a cache to S)
+  const m = STEPS[S.step]; S.phase = m.phase; setPhase(m.phase); $('#narration').textContent = m.text(S);
+  if (animated !== false && hasGSAP && G) { if (follow && FOCUS[m.phase]) G.focus(FOCUS[m.phase][0], FOCUS[m.phase][1]); tl = gsap.timeline({onComplete: () => finish(m)}); m.anim(tl, S); tl.timeScale(speed); }
+  else finish(m);
+}
+function back() { stop(); if (tl) { tl.kill(); tl = null; } if (!hist.length) return; simActive = false; S = hist.pop(); G && (G.clearPackets(), G.clear()); setPhase(S.phase); $('#narration').textContent = 'Stepped back. Press Step to watch that step again.'; render(); }
+function run() { if (S.step >= STEPS.length) return; running = true; render(); stepFwd(); }
+function stop() { running = false; clearTimeout(timer); render(); }
+function reset() { stop(); if (tl) { tl.kill(); tl = null; } simActive = false; S = fresh(); hist = []; G && (G.clearPackets(), G.clear()); setPhase(null); $('#narration').textContent = READY; render(); }
+// a manual change (setting, slider, start, swap) starts the narrated steps over but keeps the motor where it is
+function manual() { running = false; clearTimeout(timer); if (tl) { tl.kill(); tl = null; } hist = []; S.step = 0; S.phase = null; setPhase(null); G && (G.clearPackets(), G.clear()); }
+const READY = 'The rotor is held still while the field turns: standstill. Press Step or Run for the narrated run, Start motor to watch it speed up by itself, or drag the rotor speed slider.';
+
+// ---- the motor speeding up by itself: d(speed)/dt grows with (motor torque - load torque) ----
+function simStep(dt) {
+  const ns = nsOf(S), L = loadTorque(S.load), nop = operatingSpeed(ns, L);
+  const acc = 0.16 * ns * (torque(slipOf(ns, S.u)) - loadAt(S.u, L, nop));
+  S.u = Math.min(ns, S.u + acc * dt);
+  if (Math.abs(S.u - nop) < 0.3 && Math.abs(acc) < 2) { S.u = Math.round(nop); simActive = false; simDone(); }
+}
+function simDone() {
+  const M = readings(S), n = Math.round(M.u);
+  $('#narration').textContent = (simKind === 'swap' ? 'Reversed. ' : simKind === 'load' ? 'New load. ' : '') + 'The motor settled at ' + n + ' RPM ' + loadWords(S.load) + '. Motor torque ' + f2(M.t) + ' × rated matches the load, slip is ' + M.s.toFixed(4) + ' (' + (M.s * 100).toFixed(2) + '%), and the rotor frequency is ' + fmtHz(M.fr) + ' Hz. The line current is ' + M.iRatio.toFixed(1) + ' × FLA.';
+  render();
+}
+let last = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+  if (simActive) { simStep(dt * speed); live(); }
+  if (spinOn) { phi = mod(phi + S.dir * nsOf(S) * K * dt, 2 * Math.PI); rho = mod(rho + S.dir * S.u * K * dt, 2 * Math.PI); }
+  if (G && cur) G.spin(phi, rho, cur, S);
+  if (dialArrows) dialArrows.setAttribute('transform', 'rotate(' + (mod(phi - rho, 2 * Math.PI) * 180 / Math.PI).toFixed(2) + ')');
+}
+
+const stage = $('#stage');
+try { G = Graphics3D(stage); } catch (e) { console.error(e); G = null; }
+if (!G) { $('#nogl').hidden = false; document.querySelectorAll('.views').forEach(v => v.hidden = true); G = Graphics2D(stage); }
+const partsBox = $('#parts');
+PART_ORDER.forEach(([k, label]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.dataset.k = k; b.textContent = label; partsBox.appendChild(b); });
+function showPart(k) {
+  if (!INFO[k]) return;
+  $('#info').innerHTML = INFO[k](S);
+  partsBox.querySelectorAll('.btn').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  if (!tl) { G.clear(); G.hi(k, COL.A); }
+}
+G.onPick = showPart;
+partsBox.addEventListener('click', e => { const b = e.target.closest('.btn'); if (b) showPart(b.dataset.k); });
+if (stage.clientWidth < 700) { follow = false; $('#follow').classList.remove('on'); $('#follow').setAttribute('aria-pressed', 'false'); }
+
+$('#selPoles').addEventListener('change', onSupply);
+$('#selFreq').addEventListener('change', onSupply);
+function onSupply() {
+  const s0 = Math.max(0, Math.min(1, slipOf(nsOf(S), S.u)));
+  manual();
+  S.poles = +$('#selPoles').value; S.f = +$('#selFreq').value;
+  const ns = nsOf(S); S.u = Math.round(ns * (1 - s0));
+  render();
+  const M = cur;
+  $('#narration').textContent = 'Ns = 120 × ' + S.f + ' / ' + S.poles + ' = ' + ns + ' RPM, so the field arrow now turns at ' + ns + ' RPM. The slip stays ' + M.s.toFixed(4) + ', so the rotor turns at ' + Math.round(M.u) + ' RPM and the rotor frequency is ' + fmtHz(M.fr) + ' Hz.' + (S.poles > 2 ? ' More poles means a slower field: each turn of the field takes ' + (S.poles / 2) + ' cycles of the supply.' : ' Two poles is the fastest an induction motor can be built for a given frequency.');
+}
+$('#selLoad').addEventListener('change', () => {
+  manual(); S.load = +$('#selLoad').value; render();
+  const n = nopOf(S), sl = slipOf(nsOf(S), n);
+  if (S.u > 0 && cur.state !== 'standstill') { simActive = true; simKind = 'load'; $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. The motor changes speed until its torque matches the load again, at ' + n + ' RPM (slip ' + sl.toFixed(4) + ').'; }
+  else $('#narration').textContent = 'Load set ' + loadWords(S.load) + '. Press Start motor or step through the run: at full speed the rotor settles at ' + n + ' RPM, slip ' + sl.toFixed(4) + '.';
+});
+$('#spd').addEventListener('input', e => {
+  if (simActive || S.step || tl) manual();
+  simActive = false; S.u = +e.target.value; live();
+  $('#narration').textContent = 'You are holding the rotor at ' + Math.round(S.u) + ' RPM with a test brake. Slip is ' + cur.s.toFixed(4) + ', the rotor frequency is ' + fmtHz(cur.fr) + ' Hz, and the motor makes ' + f2(cur.t) + ' × rated torque with a power factor of ' + f2(cur.pf) + '.';
+});
+$('#btnStart').addEventListener('click', () => {
+  manual(); S.u = 0; simActive = true; simKind = 'start'; render();
+  $('#narration').textContent = 'Starting across the line ' + loadWords(S.load) + '. Watch the operating point climb the torque curve and the matrix move from standstill to full speed.';
+});
+$('#btnSwap').addEventListener('click', () => {
+  manual(); S.dir = -S.dir; S.u = -S.u; simActive = true; simKind = 'swap'; render();
+  $('#narration').textContent = 'Leads B and C swapped: the phase order is now ' + (S.dir > 0 ? 'A-B-C' : 'A-C-B') + ', so the field turns the other way. ' + (S.u < -0.5 ? 'The rotor still turns the old way, against the field, so the slip is above 1 and the motor brakes before it reverses.' : 'The motor starts in the new direction.');
+});
+$('#btnSpin').addEventListener('click', () => { spinOn = !spinOn; const b = $('#btnSpin'); b.textContent = spinOn ? 'Pause spin' : 'Resume spin'; b.setAttribute('aria-pressed', String(!spinOn)); });
+$('#btnStep').addEventListener('click', () => { stop(); stepFwd(true); });
+$('#btnRun').addEventListener('click', () => running ? stop() : run());
+$('#btnBack').addEventListener('click', back);
+$('#btnReset').addEventListener('click', reset);
+$('#speed').addEventListener('input', e => { speed = SPEEDS[+e.target.value]; $('#speedOut').textContent = speed + '×'; if (tl) tl.timeScale(speed); });
+document.querySelectorAll('.views button[data-view]').forEach(b => b.addEventListener('click', () => { G.view(b.dataset.view); document.querySelectorAll('.views button[data-view]').forEach(x => x.classList.toggle('on', x === b)); }));
+$('#follow').addEventListener('click', () => { follow = !follow; $('#follow').classList.toggle('on', follow); $('#follow').setAttribute('aria-pressed', follow); });
+document.addEventListener('keydown', e => { const t = e.target && e.target.tagName; if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA' || t === 'BUTTON') return;
+  if (e.key === ' ') { e.preventDefault(); stop(); stepFwd(true); } else if (e.key === 'b' || e.key === 'B') back(); else if (e.key === 'r' || e.key === 'R') $('#btnRun').click(); });
+if (!spinOn) { $('#btnSpin').textContent = 'Resume spin'; $('#btnSpin').setAttribute('aria-pressed', 'true'); }
+$('#narration').textContent = READY;
+render();
+requestAnimationFrame(tick);
+window.__motor = {get S() { return S; }, get M() { return cur; }, kind: G.kind, get sim() { return simActive; }, get busy() { return !!tl; },
+  syncSpeed: syncSpeed, slipOf: slipOf, torque: torque, operatingSpeed: operatingSpeed};
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slip and speed challenge</title>
+<meta name="description" content="LSN-MOTORS Lesson 1 interactive: Ten motors at Biscayne Cold Storage. Work out the synchronous speed, the poles, the slip, and the rotor frequency, and explain what the numbers mean.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Figtree:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<style>
+  /* ===== CBT "Shield bench" theme v1 (quality reference: templates/theme/reference/tiny-machine-lab.html). Paste as the first block of every page's <style>. ===== */
+  :root{
+    /* CBT brand */
+    --cbt-navy:#283068; --cbt-sky:#38B0E0; --cbt-gold:#E0B840; --cbt-gray:#989890; --cbt-navy-dark:#1B2150;
+    /* dark bench (navy board, gold traces) */
+    --board:#141a45; --board-deep:#0b0f2b; --panel:#10163b; --panel-2:#171f4f; --line:#2a3470; --line-2:#3a4690;
+    --silk:#eef1fa; --silk-dim:#aeb3c9; --copper:#E0B840;
+    /* signal colors: each course plan says what they mean; defaults below */
+    --addr:#E0B840; --data:#38B0E0; --ctrl:#F0786A; --alu:#6FD49B; --oper:#A9B4FF; --out:#9FE7FF; --led:#6FD49B;
+    --ok:#6FD49B; --bad:#F0786A; --warn:#E0B840; --neon:#39ff14;
+    --font-mono:"Red Hat Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --font-body:"Figtree","Helvetica Neue",Arial,sans-serif;
+    --font-display:"Archivo","Arial Black",Arial,sans-serif;
+    --mono:var(--font-mono); --sans:var(--font-body); --display:var(--font-display);
+    --r:6px; --lab:10px;
+    /* legacy names, mapped to the dark theme */
+    --ink:#eef1fa; --ink-2:#cdd2e6; --muted:#aeb3c9; --bg:#0b0f2b; --card:#10163b; --edge:#2a3470; --edge-2:#3a4690; --dim:#aeb3c9; --silk-2:#cdd2e6;
+    --code-bg:#070a22; --code-ink:#9FE7FF;
+    --net-blue:#38B0E0; --net-green:#6FD49B; --net-amber:#E0B840; --net-purple:#A9B4FF; --net-teal:#5fe0c8;
+    --ok-soft:rgba(111,212,155,.10); --bad-soft:rgba(240,120,106,.10); --warn-soft:rgba(224,184,64,.10);
+    --radius:6px; --shadow:none;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  html{background:var(--board-deep)}
+  [hidden]{display:none!important}
+  body{color:var(--silk);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;
+    background:radial-gradient(1200px 600px at 30% -10%,#1d2a6e 0%,transparent 60%),var(--board-deep)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(135deg,rgba(224,184,64,.035) 0 2px,transparent 2px 26px);-webkit-mask:radial-gradient(900px 600px at 100% 100%,#000,transparent 70%);mask:radial-gradient(900px 600px at 100% 100%,#000,transparent 70%)}
+  button,input,select,textarea{font:inherit;color:inherit}
+  a{color:var(--data)}
+  :focus-visible{outline:2px solid var(--addr);outline-offset:2px}
+  /* brand bar: white, CBT logo (shield and wordmark), navy rule with a gold underline like the shield */
+  .topbar{position:relative;z-index:5;background:#fff;border-bottom:4px solid var(--cbt-navy);box-shadow:0 3px 0 var(--cbt-gold)}
+  .topbar-inner{max-width:none;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand-logo{display:block;flex:none;height:40px}
+  .brand-logo img{height:40px;width:auto;display:block}
+  .crumb{font-size:13px;color:#5d6178;letter-spacing:.02em;border-left:1px solid #DADDEA;padding-left:16px}
+  .crumb b{color:var(--cbt-navy);font-weight:700}
+  .crumb a{color:var(--cbt-navy)}
+  /* page mode (challenges and pages with a scrolling layout) */
+  main,.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:26px 16px 36px}
+  .hero{margin:0 0 20px}
+  .eyebrow{display:block;margin:0;font:600 10.5px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cbt-sky);background:none;padding:0}
+  h1{margin:6px 0 8px;font-family:var(--font-display);font-weight:800;font-stretch:118%;font-size:clamp(24px,3.4vw,36px);line-height:1.15;letter-spacing:-.01em;text-wrap:balance;color:var(--silk)}
+  h1 .num{color:var(--cbt-gold)}
+  h2{margin:0 0 10px;font-family:var(--font-display);font-weight:700;font-stretch:110%;font-size:14px;letter-spacing:.02em;color:var(--silk)}
+  h2 small,h3 small{color:var(--silk-dim);font-weight:400}
+  h3{margin:0 0 8px;font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.02em;color:var(--silk)}
+  .lede{margin:0;color:var(--silk-dim);font-size:15px;max-width:68ch}
+  .muted{color:var(--silk-dim)}
+  .spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .spec div{background:var(--panel);padding:9px 11px}
+  .spec b{display:block;font:600 15px var(--font-mono);color:var(--silk)}
+  .spec span{font-size:12px;color:var(--silk-dim)}
+  @media(min-width:960px){.hero.split{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:end}}
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;color:var(--silk);
+    background-image:radial-gradient(rgba(238,241,250,.035) 1px,transparent 1px);background-size:14px 14px}
+  .card[data-ref]::after{content:attr(data-ref);position:absolute;top:9px;right:12px;font:500 9.5px var(--font-mono);letter-spacing:.12em;color:rgba(174,179,201,.55)}
+  .grid{display:grid;gap:14px}
+  .grid>*{min-width:0}
+  @media(min-width:900px){.grid.two{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}}
+  details,details.howto{border:1px solid var(--line);border-radius:5px;background:var(--panel)}
+  details.howto{margin:0 0 16px}
+  summary{cursor:pointer;padding:10px 12px;font:500 12.5px var(--font-mono);color:var(--silk)}
+  details>*:not(summary){margin-left:12px;margin-right:12px}
+  details.howto ol,details.howto ul{margin:4px 12px 12px;padding-left:20px;color:var(--silk-dim)}
+  details.howto li{margin-bottom:5px}
+  details.howto li::marker{color:var(--copper)}
+  .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:5px;padding:9px 12px;font:500 12px var(--font-mono);color:var(--silk);cursor:pointer;transition:border-color .2s,background .2s;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+  .btn:hover:not(:disabled){border-color:var(--copper)}
+  .btn.primary,.btn.go{background:var(--copper);border-color:var(--copper);color:#1a1205;font-weight:600}
+  .btn.primary:hover:not(:disabled),.btn.go:hover:not(:disabled){background:#ecc85c}
+  .btn[aria-pressed="true"],.btn.on{border-color:var(--data);color:var(--data)}
+  .btn:disabled,.btn[disabled]{opacity:.4;cursor:not-allowed}
+  input[type=text],input[type=number],select,textarea{background:var(--board-deep);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font:500 13.5px var(--font-mono);color:var(--silk);min-width:0}
+  input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--copper)}
+  .mono,code,kbd{font-family:var(--font-mono);font-size:.92em}
+  code{background:rgba(238,241,250,.07);padding:1px 5px;border-radius:3px}
+  .cli{background:var(--code-bg);color:var(--code-ink);font:500 12.5px/1.6 var(--font-mono);border-radius:5px;padding:12px 14px;overflow:auto;white-space:pre;border:1px solid var(--line)}
+  .pill{display:inline-block;font:500 10.5px var(--font-mono);letter-spacing:.06em;padding:3px 8px;border-radius:3px;background:var(--panel-2);color:var(--silk-dim);border:1px solid var(--line)}
+  .feedback{border-radius:5px;padding:11px 13px;margin-top:12px;font-size:14.5px;color:var(--silk)}
+  .feedback.ok{background:rgba(111,212,155,.08);border:1px solid rgba(111,212,155,.45)}
+  .feedback.bad{background:rgba(240,120,106,.08);border:1px solid rgba(240,120,106,.45)}
+  .feedback.info{background:rgba(56,176,224,.08);border:1px solid rgba(56,176,224,.45)}
+  .score{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font:500 12px var(--font-mono);color:var(--silk-dim)}
+  .score .big{font:800 36px/1 var(--font-display);font-stretch:118%;color:var(--silk);font-variant-numeric:tabular-nums}
+  table,table.data{border-collapse:collapse;width:100%;font:500 12px var(--font-mono);font-variant-numeric:tabular-nums}
+  th,table.data th{font-weight:500;color:var(--silk-dim);text-align:left;font-size:10.5px;letter-spacing:.04em;padding:7px 8px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+  td,table.data td{padding:4px 8px;border-bottom:1px solid rgba(42,52,112,.55)}
+  .scroll-x,.memwrap{overflow-x:auto}
+  .memwrap{border:1px solid var(--line);border-radius:5px}
+  svg text{font-family:var(--font-mono)}
+  /* step-by-step explanation (page mode and app mode) */
+  .stepper{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .caption,.narr{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:13px 15px;color:var(--silk)}
+  .caption{margin-top:12px;min-height:4.4em}
+  .caption .t{font:500 11px var(--font-mono);letter-spacing:.1em;color:var(--cap,var(--copper));margin-bottom:6px;text-transform:uppercase}
+  .narr{display:flex;flex-direction:column;gap:8px}
+  .narr-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:400 11px var(--font-mono);color:var(--silk-dim)}
+  .ptag{display:inline-flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.1em;color:var(--silk)}
+  .ptag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pc,var(--silk-dim));box-shadow:0 0 8px var(--pc,transparent)}
+  .narr p{margin:0;font-size:15.5px;line-height:1.55;min-height:4.6em}
+  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .controls .btn{padding:10px 6px}
+  .speed{display:flex;align-items:center;gap:12px;font:400 11.5px var(--font-mono);color:var(--silk-dim)}
+  .speed input{flex:1;min-width:0}
+  .speed output{color:var(--silk);width:3.5em;text-align:right;font-variant-numeric:tabular-nums}
+  .hint{margin:0;font-size:12px;color:var(--silk-dim)}
+  .rail{display:flex;gap:2px;margin:4px 0 12px;padding:4px;list-style:none;background:rgba(11,15,43,.78);border:1px solid var(--line);border-radius:6px}
+  .rail>div,.rail>li{flex:1;text-align:center;font:500 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:4px;color:var(--silk-dim);transition:background .25s,color .25s}
+  .rail>div small{display:block;font:400 9.5px var(--font-body);letter-spacing:.02em;text-transform:none;margin-top:2px;opacity:.85}
+  .rail>.on{background:var(--c,var(--copper));color:#1a1205}
+  .rail>.done{color:var(--c,var(--copper))}
+  /* live state */
+  .regs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .reg{border:1px solid var(--line);border-radius:5px;padding:9px 11px;transition:border-color .3s,background .3s;min-width:0}
+  .reg.kv{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:baseline}
+  .reg.on,.reg.flash{border-color:var(--hc,var(--copper));background:rgba(224,184,64,.08)}
+  .reg .rn{font:600 12px var(--font-mono)}
+  .reg .rv{font:600 17px var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+  .reg .rf{font-size:11.5px;color:var(--silk-dim)}
+  .reg .rs{font:400 10.5px var(--font-mono);color:var(--silk-dim);text-align:right;font-variant-numeric:tabular-nums}
+  .reg.wide{grid-column:1/-1}
+  .reg .n{display:flex;justify-content:space-between;align-items:baseline;font:600 12px var(--font-mono);color:var(--silk)}
+  .reg .n b{font:600 17px var(--font-mono);font-variant-numeric:tabular-nums}
+  .bits{grid-column:1/-1;display:grid;grid-template-columns:repeat(var(--nb,8),1fr);gap:4px;margin-top:8px}
+  .bit{display:flex;flex-direction:column;align-items:center;gap:3px;font:400 9.5px var(--font-mono);color:var(--silk-dim)}
+  .bit i{width:100%;height:16px;border-radius:2px;background:#1a2350;border:1px solid var(--line);transition:background .25s,box-shadow .25s}
+  .bit.one i{background:var(--led);border-color:var(--led);box-shadow:0 0 8px rgba(111,212,155,.55)}
+  .ledbits{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}
+  .ledbits i{width:16px;height:16px;border-radius:2px;background:#1a2350;border:1px solid var(--line);font:600 9px/14px var(--font-mono);font-style:normal;color:#4a5490;text-align:center}
+  .ledbits i.on{background:var(--led);border-color:var(--led);color:#06220f;box-shadow:0 0 8px rgba(111,212,155,.55)}
+  .tape{display:flex;flex-wrap:wrap;gap:4px;min-height:34px;align-content:flex-start}
+  .tape span{font:600 13px var(--font-mono);color:var(--out);background:#0f1c44;border:1px solid #2a4a7a;border-radius:3px;padding:3px 7px;font-variant-numeric:tabular-nums}
+  .tape em{font-style:normal;font-size:12px;color:var(--silk-dim)}
+  .notice{margin:0;padding-left:18px;color:var(--silk-dim);font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+  .notice li::marker{color:var(--copper)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 10.5px var(--font-mono);color:var(--silk-dim);letter-spacing:.04em}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:16px;height:3px;border-radius:2px;background:var(--c);box-shadow:0 0 8px var(--c)}
+  /* app mode: the 3D board fills the left, a control rail sits on the right (stacks under the board on phones) */
+  .app{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,410px);height:calc(100vh - 55px);min-height:560px}
+  .stage{position:relative;min-width:0;min-height:320px;overflow:hidden;background:radial-gradient(ellipse at 40% 38%,#1d2a6e 0%,var(--board-deep) 72%);touch-action:none}
+  .stage .gl{position:absolute;inset:0;display:block;z-index:1}
+  .stage .labels{position:absolute!important;top:0;left:0;z-index:2}
+  .stage .flat{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .nogl{position:absolute;left:0;right:0;top:0;padding:7px 12px;text-align:center;color:var(--silk-dim);font-size:12px;z-index:4;background:rgba(11,15,43,.9);border-bottom:1px solid var(--line)}
+  .stage:has(.nogl:not([hidden])) .hud-top{top:44px}
+  .stage:has(.nogl:not([hidden])) .flat{top:34px;height:calc(100% - 34px)}
+  .hud{position:absolute;z-index:3;pointer-events:none;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hud button,.hud a{pointer-events:auto}
+  .hud-top{top:14px;left:16px;right:16px}
+  .hud-bottom{bottom:14px;left:16px;right:16px;justify-content:space-between;align-items:flex-end}
+  .hud .phases,.hud .ticks,.hud .legend,.hud .views{background:rgba(11,15,43,.78);border:1px solid var(--line);border-radius:6px;backdrop-filter:blur(6px)}
+  .phases{list-style:none;margin:0;padding:4px;display:flex;gap:2px}
+  .phases li{font:500 11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:4px;color:var(--silk-dim);transition:background .25s,color .25s}
+  .phases li.on{background:var(--c,var(--copper));color:#1a1205}
+  .ticks{font:400 11px var(--font-mono);color:var(--silk-dim);padding:9px 10px;font-variant-numeric:tabular-nums}
+  .ticks b{color:var(--silk);font-weight:600}
+  .hud .legend{padding:8px 12px}
+  .views{display:flex;gap:2px;padding:4px}
+  .views button{border:0;background:transparent;font:400 11px var(--font-mono);padding:6px 10px;border-radius:4px;color:var(--silk-dim);cursor:pointer}
+  .views button:hover{color:var(--silk)}
+  .views button.on{background:var(--panel-2);color:var(--silk)}
+  .credit{flex-basis:100%;margin:2px 0 0 2px;font:600 14px var(--font-mono);letter-spacing:.08em;color:var(--neon);text-shadow:0 0 4px var(--neon),0 0 12px rgba(57,255,20,.75),0 0 26px rgba(57,255,20,.45)}
+  .tag,.stage3d .label3d{pointer-events:none;display:flex;flex-direction:column;align-items:center;font-family:var(--font-mono);line-height:1.1;text-align:center;color:var(--silk);text-shadow:0 1px 2px rgba(0,0,0,.8)}
+  .tag .nm{font-size:calc(var(--lab) * .85);letter-spacing:.1em;color:var(--silk-dim)}
+  .tag .vl{font-size:calc(var(--lab) * 1.3);font-weight:600;font-variant-numeric:tabular-nums}
+  .tag .sb{font-size:calc(var(--lab) * .72);color:var(--silk-dim);letter-spacing:.04em}
+  .tag .sb:empty{display:none}
+  .tag.on .nm{color:var(--silk)}
+  .tag.on .vl{color:#fff6d8}
+  .cell .nm{font-size:calc(var(--lab) * .75)}
+  .cell .vl{font-size:calc(var(--lab) * 1.15)}
+  .zone{pointer-events:none;font-family:var(--font-mono);font-size:calc(var(--lab) * .82);letter-spacing:.14em;text-transform:uppercase;color:var(--c,var(--silk-dim));opacity:.85;white-space:nowrap;text-align:center;line-height:1.3}
+  .lcd{pointer-events:none;font-family:var(--font-mono);font-weight:600;color:var(--out);font-size:calc(var(--lab) * 2);text-shadow:0 0 10px rgba(111,212,155,.8);font-variant-numeric:tabular-nums}
+  .pkt{pointer-events:none;font-family:var(--font-mono);font-size:calc(var(--lab) * 1.1);font-weight:700;color:#06120f;background:var(--c);padding:2px 6px;border-radius:3px;box-shadow:0 0 14px var(--c);white-space:nowrap}
+  .panel{min-width:0;overflow-y:auto;background:var(--panel);border-left:1px solid var(--line);padding:20px 18px 28px;display:flex;flex-direction:column;gap:22px;
+    background-image:radial-gradient(rgba(238,241,250,.035) 1px,transparent 1px);background-size:14px 14px}
+  .panel h1{font-size:26px;margin:4px 0 6px}
+  /* a Lab3D stage inside a card (page mode challenges) */
+  .card .stage{width:100%;aspect-ratio:16/10;min-height:0;border-radius:6px;border:1px solid var(--line)}
+  @media(max-width:640px){.card .stage{aspect-ratio:4/3}}
+  .progress{display:flex;gap:3px;margin:10px 0}
+  .progress i{flex:1;height:6px;border-radius:2px;background:var(--line)}
+  .progress i.ok{background:var(--ok)}.progress i.part{background:var(--warn)}.progress i.bad{background:var(--bad)}.progress i.now{background:var(--cbt-sky)}
+  .opts{display:grid;gap:8px;margin-top:10px}
+  .opts button{text-align:left;padding:11px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);color:var(--silk);font:500 14.5px var(--font-body);cursor:pointer}
+  .opts button:hover:not(:disabled){border-color:var(--cbt-gold)}
+  .opts button.right{border-color:var(--ok);background:rgba(111,212,155,.10)}
+  .opts button.wrong{border-color:var(--bad);background:rgba(240,120,106,.10)}
+  /* the older make3D stage (page mode) */
+  .stage3d{position:relative;width:100%;aspect-ratio:16/10;min-height:280px;border-radius:6px;overflow:hidden;touch-action:none;background:radial-gradient(ellipse at 40% 38%,#1d2a6e 0%,var(--board-deep) 72%);border:1px solid var(--line)}
+  @media(max-width:640px){.stage3d{aspect-ratio:4/3}}
+  .stage3d canvas{position:absolute;inset:0;display:block;width:100%!important;height:100%!important}
+  .stage3d .fallback{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;font-size:12px;color:var(--silk-dim);background:rgba(11,15,43,.85);text-align:center}
+  .stage3d .label3d{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-weight:600}
+  .stage3d .label3d.pkt{color:#06120f;text-shadow:none;background:var(--c,currentColor);padding:2px 6px;border-radius:3px}
+  footer.foot{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:16px;color:var(--silk-dim);font-size:12.5px;border-top:1px solid var(--line)}
+  footer.foot .byline,.byline{margin-top:4px;font:600 13px var(--font-mono)!important;letter-spacing:.08em;color:var(--neon)!important;text-shadow:0 0 4px var(--neon),0 0 12px rgba(57,255,20,.6)}
+  .reveal{animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*80ms)}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media(max-width:860px){
+    .app .stage .zoomctl{top:56px;right:10px;transform:none;flex-direction:row}
+    .app{grid-template-columns:1fr;height:auto}
+    .app .stage{height:62vh;min-height:360px}
+    .panel{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  }
+  @media(max-width:520px){
+    .hud .legend{font-size:9.5px;gap:3px 10px}
+    .phases li{padding:5px 7px;font-size:10px}
+    .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* ===== end of theme ===== */
+
+  /* page-specific CSS below (page mode challenge) */
+  .qhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding-right:70px}
+  .qhead h2{margin:0}
+  .qtext{margin:0 0 6px;font-size:15.5px;line-height:1.55}
+  .fstrip{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+  .fstrip code{font-size:12px;padding:3px 7px;border:1px solid var(--line);background:var(--board-deep);color:var(--out)}
+  .opts button{display:flex;gap:10px;align-items:flex-start;line-height:1.45}
+  .opts button .key{flex:none;width:22px;height:22px;border-radius:4px;border:1px solid var(--line-2);display:inline-flex;align-items:center;justify-content:center;font:600 11px var(--font-mono);color:var(--silk-dim);margin-top:1px}
+  .opts button.sel{border-color:var(--cbt-sky);background:rgba(56,176,224,.10)}
+  .opts button.sel .key{border-color:var(--cbt-sky);color:var(--cbt-sky)}
+  .opts button.right .key{border-color:var(--ok);color:var(--ok)}
+  .opts button.wrong .key{border-color:var(--bad);color:var(--bad)}
+  .opts button:disabled{cursor:default}
+  .feedback .best{margin:8px 0 0;padding-top:8px;border-top:1px solid rgba(238,241,250,.12)}
+  .motorname{margin:-4px 0 8px;font-size:13.5px}
+  .motorname b{color:var(--cbt-gold);font-weight:600}
+  .boardlegend{margin-top:10px}
+  .howto-note{margin:0 12px 12px;font-size:13.5px}
+  #resTable td{vertical-align:top;padding:7px 8px;font:500 13px/1.4 var(--font-body)}
+  #resTable td:first-child,#resTable td.pts{font-family:var(--font-mono)}
+  #resTable .bestcell{display:block;font-size:11.5px;margin-top:2px}
+  #resTable td.pts{white-space:nowrap;font-weight:600}
+  #resTable td.pts.ok{color:var(--ok)} #resTable td.pts.part{color:var(--warn)} #resTable td.pts.bad{color:var(--bad)}
+  #resTable tr.tot td{border-bottom:0;padding-top:10px;white-space:nowrap}
+  @media(max-width:520px){.qhead{padding-right:0}.qhead h2{padding-right:70px}}
+  /* zoom buttons in a row under the board, so they never cover the value chips */
+  .card .stage .zoomctl{top:auto;bottom:10px;right:10px;transform:none;flex-direction:row}
+  .card .stage .zoomctl button{height:30px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand-logo" href="https://www.cbt.edu" target="_blank" rel="noopener" aria-label="CBT Technology Institute"><img src="https://raw.githubusercontent.com/luisleon-cbt/items/main/cbt-logo-mark.png" alt="CBT Technology Institute"></a>
+    <div class="crumb"><a href="../index.html"><b>LSN-MOTORS</b> Three-phase induction motor behavior</a> · Lesson 1 · Interactive B</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero split reveal" style="--i:0">
+    <div><span class="eyebrow">LSN-MOTORS · Lesson 1 · Challenge</span><h1>Slip and speed challenge</h1><p class="lede">Ten motors at Biscayne Cold Storage. Work out the synchronous speed, the poles, the slip, and the rotor frequency, and explain what the numbers mean.</p></div>
+    <div class="spec"><div><b id="specRounds">10</b><span>rounds, 10 points each</span></div><div><b>100</b><span>points</span></div><div><b>Partial</b><span>credit where fair</span></div><div><b>Shuffled</b><span>every attempt</span></div></div>
+  </section>
+  <details class="howto reveal" style="--i:1"><summary>How this challenge works</summary>
+    <ol><li>Read the situation. The board shows the motor: the glowing arrow is the rotating magnetic field of the stator, and the round part inside is the rotor. A value marked ? is the one you work out.</li><li>Pick an answer and press Check to see your points, the worked math, and why.</li><li>Press Play (or Step and Back) to watch the explanation on the board: green when your answer was the best, coral when it needs review.</li><li>Finish all ten rounds, review the results table, and try again.</li></ol>
+    <p class="muted howto-note">Words to know: Ns (synchronous speed) is how fast the stator's magnetic field turns. Nr is the rotor speed, read with a tachometer. Slip is how far the rotor falls behind the field, as a part of Ns. Rotor frequency (fr) is how many times a second the rotor currents change direction. FLA is the full-load amps on the nameplate. A VFD (variable frequency drive) changes the frequency sent to the motor.</p>
+    <p class="muted howto-note">The current and power factor rounds use the lesson's simplified teaching model (rotor resistance R2 = 0.04 and standstill reactance X20 = 0.20, per unit). It leaves out the stator resistance and other losses. Real motors draw roughly 5 to 7 times full-load current at start.</p>
+  </details>
+  <div class="grid two">
+    <section class="card reveal" style="--i:2" data-ref="U1 · ROUND">
+      <div class="progress" id="prog"></div>
+      <div class="qhead"><h2 id="qTitle">Round 1</h2><span class="pill" id="qTopic"></span></div>
+      <div class="fstrip" aria-label="Formulas"><code>Ns = 120 × f / P</code><code>s = (Ns - Nr) / Ns</code><code>% slip = s × 100</code><code>fr = s × f</code></div>
+      <p id="qText" class="qtext"></p>
+      <div class="opts" id="opts"></div>
+      <div class="stepper"><button class="btn primary" id="btnCheck" type="button">Check</button><button class="btn" id="btnNext" type="button" disabled>Next round</button></div>
+      <div id="fb" aria-live="polite"></div>
+    </section>
+    <aside class="card reveal" style="--i:3" data-ref="U2 · BOARD">
+      <h2>Watch it on the board</h2>
+      <p class="motorname"><span class="muted">Motor:</span> <b id="motorName"></b></p>
+      <div class="stage" id="stage"><div class="nogl" id="nogl" hidden>Flat board (no 3D here). Same steps.</div></div>
+      <div class="legend boardlegend"><span style="--c:#E0B840"><i></i>3-phase supply</span><span style="--c:#9FE7FF"><i></i>rotating field</span><span style="--c:#38B0E0"><i></i>values</span><span style="--c:#A9B4FF"><i></i>the math</span><span style="--c:#6FD49B"><i></i>your answer was best</span><span style="--c:#F0786A"><i></i>review</span></div>
+      <div class="caption" id="cap" aria-live="polite"><div class="t" id="capT">Ready</div><p id="capB" style="margin:0">After you check an answer, press Play to see why.</p></div>
+      <div class="stepper"><button class="btn" id="btnBack" type="button" disabled>Back</button><button class="btn" id="btnStep" type="button" disabled>Step</button><button class="btn go" id="btnPlay" type="button" disabled>Play the explanation</button></div>
+      <div class="score" style="margin-top:14px"><span class="big" id="score">0</span><span>points so far, out of 100</span></div>
+    </aside>
+  </div>
+  <section class="card reveal" style="--i:4;margin-top:14px" id="results" hidden data-ref="U3 · RESULTS">
+    <h2>Your results</h2>
+    <p class="muted" id="resNote" style="margin:0 0 10px"></p>
+    <div class="scroll-x"><table class="data" id="resTable"></table></div>
+    <div class="stepper"><button class="btn primary" id="btnAgain" type="button">Try again</button></div>
+  </section>
+</main>
+<footer class="foot">CBT Technology Institute · Flagler Campus · LSN-MOTORS Three-phase induction motor behavior<div class="byline">By Professor De Leon</div></footer>
+
+<script>
+(function () {
+"use strict";
+const hasGSAP = typeof window.gsap !== 'undefined';
+const $ = s => document.querySelector(s);
+// LAB3D START: CBT 3D kit (modeled on the professor's "Tiny Machine Lab" reference, in CBT colors: navy board, gold traces). Paste as one block.
+// Needs Three.js r147 (three.min.js), examples/js/controls/OrbitControls.js, examples/js/renderers/CSS2DRenderer.js and GSAP 3.12.5.
+// Returns null when any of them (or WebGL) is missing: then draw the 2D fallback.
+//
+// const lab = Lab3D(stageEl, {
+//   board: {w: 22.4, d: 13.6, cx: 0, cz: 0.2, silk: 'BAY-4  REV 1.0  ...', seed: 11},
+//   views: {overview: {pos: [0, 17, 14.5], tgt: [0, 0, 0.4], want: 1.55}, cpu: {...}},
+//   colors: {copper: '#E0B840'}, palette: {...}
+// });
+// lab.chip(key, {x, z, w, d, h, nm, body, metal, cell})  -> rec {g, mat, el, val, sub, h, key}
+// lab.silkRect(x0, x1, z0, z1)   lab.zone(text, x, z, color)   lab.label(html, cls, x, y, z, parent)
+// lab.busMat(color, {base, rest})  lab.trace([{x,z}...], lines, mat)  lab.glowBus(mat)
+// lab.fly([{x,z}...], text, color, {y, dur}) -> GSAP timeline (packet sphere + halo + pill label)
+// lab.hi(rec, color)  lab.clear()  lab.pop(rec)  lab.setView(name)  lab.zoom(factor)  lab.intro()  lab.onPick(fn)  lab.clearPackets()
+// Zoom buttons (+, -, FIT) and the + - 0 keys are added to the stage automatically (opts.zoomUI: false turns them off; opts.fitView picks the FIT view).
+function Lab3D(stage, opts) {
+  opts = opts || {};
+  const hasG = typeof window.gsap !== 'undefined';
+  if (!window.THREE || !THREE.OrbitControls || !THREE.CSS2DRenderer || !hasG) return null;
+  try { const t = document.createElement('canvas'); if (!(t.getContext('webgl') || t.getContext('experimental-webgl'))) return null; } catch (e) { return null; }
+  const T = THREE;
+  const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const B = Object.assign({w: 22.4, d: 13.6, cx: 0, cz: 0.2, silk: '', seed: 11}, opts.board || {});
+  // CBT palette (override any key with opts.palette)
+  const P = Object.assign({
+    boardA: '#1a2257', boardB: '#10163f', dots: 'rgba(238,241,250,0.04)', trace: '224,184,64', via: '#0a0e2a',
+    silkText: 'rgba(238,241,250,0.34)', edge: 0x0d1238, clear: 0x0b0f2b, sky: 0xdfe6ff, ground: 0x10163f, rim: 0x38b0e0,
+    chip: '#161a2e', cell: '#1c2138', pinDot: 0x7a809c, font: '"Red Hat Mono", ui-monospace, monospace',
+    uiBg: 'rgba(11,15,43,.82)', uiLine: '#2a3470', uiText: '#eef1fa', uiHover: '#171f4f', uiAccent: '#E0B840'
+  }, opts.palette || {});
+  const COPPER = (opts.colors && opts.colors.copper) || '#E0B840';
+
+  const renderer = new T.WebGLRenderer({antialias: true, powerPreference: 'high-performance'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.setClearColor(P.clear, 0);
+  renderer.domElement.className = 'gl';
+  stage.prepend(renderer.domElement);
+  const labelR = new T.CSS2DRenderer();
+  labelR.domElement.className = 'labels';
+  renderer.domElement.after(labelR.domElement);
+
+  const scene = new T.Scene();
+  scene.fog = new T.Fog(P.clear, 34, 70);
+  const camera = new T.PerspectiveCamera(40, 1, 0.1, 200);
+  const controls = new T.OrbitControls(camera, labelR.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 5; controls.maxDistance = 42;
+  controls.zoomSpeed = 1.1;
+  // keep the mouse wheel inside the 3D view: zoom the board, do not scroll the page
+  stage.addEventListener('wheel', e => e.preventDefault(), {passive: false});
+
+  scene.add(new T.HemisphereLight(P.sky, P.ground, 0.6));
+  const sun = new T.DirectionalLight(0xfff1dc, 1.0); sun.position.set(-7, 16, 9); sun.castShadow = true;
+  sun.shadow.mapSize.set(1536, 1536);
+  Object.assign(sun.shadow.camera, {left: -B.w / 2 - 2, right: B.w / 2 + 2, top: B.d / 2 + 2, bottom: -B.d / 2 - 2, near: 1, far: 44});
+  sun.shadow.bias = -0.0005; scene.add(sun);
+  const rim = new T.DirectionalLight(P.rim, 0.35); rim.position.set(12, 6, -10); scene.add(rim);
+
+  // board: a canvas texture with a dot grid, random copper traces, vias, mounting holes and silkscreen
+  function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const cv = document.createElement('canvas'); cv.width = 2048; cv.height = Math.round(2048 * B.d / B.w);
+  function drawBoard() {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, rnd = rng(B.seed);
+    const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, P.boardA); grd.addColorStop(1, P.boardB);
+    g.fillStyle = grd; g.fillRect(0, 0, W, H);
+    g.fillStyle = P.dots;
+    for (let x = 0; x < W; x += 28) for (let y = 0; y < H; y += 28) g.fillRect(x, y, 2, 2);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    for (let i = 0; i < 85; i++) {
+      let x = rnd() * W, y = rnd() * H, dir = Math.floor(rnd() * 8);
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 4; k++) { dir = (dir + (rnd() < .5 ? 1 : 7)) % 8; const len = 30 + rnd() * 170, a = dir * Math.PI / 4; x += Math.cos(a) * len; y += Math.sin(a) * len; g.lineTo(x, y); }
+      g.strokeStyle = 'rgba(' + P.trace + ',' + (0.06 + rnd() * 0.09) + ')'; g.lineWidth = 2 + rnd() * 3; g.stroke();
+      g.beginPath(); g.arc(x, y, 5.5, 0, Math.PI * 2); g.fillStyle = 'rgba(' + P.trace + ',0.22)'; g.fill();
+      g.beginPath(); g.arc(x, y, 2.2, 0, Math.PI * 2); g.fillStyle = P.via; g.fill();
+    }
+    [[60, 60], [W - 60, 60], [60, H - 60], [W - 60, H - 60]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 26, 0, Math.PI * 2); g.fillStyle = 'rgba(' + P.trace + ',0.35)'; g.fill(); g.beginPath(); g.arc(x, y, 15, 0, Math.PI * 2); g.fillStyle = P.via; g.fill(); });
+    g.font = '500 24px ' + P.font;
+    g.fillStyle = P.silkText;
+    if (B.silk) g.fillText(B.silk, 120, H - 48);
+    g.fillText('U1', 120, 92);
+  }
+  drawBoard();
+  const tex = new T.CanvasTexture(cv); tex.encoding = T.sRGBEncoding; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawBoard(); tex.needsUpdate = true; });
+  const edge = new T.MeshStandardMaterial({color: P.edge, roughness: .8});
+  const topM = new T.MeshStandardMaterial({map: tex, roughness: .62, metalness: .05});
+  const board = new T.Mesh(new T.BoxGeometry(B.w, 0.36, B.d), [edge, edge, topM, edge, edge, edge]);
+  board.position.set(B.cx, -0.18, B.cz); board.receiveShadow = true; scene.add(board);
+
+  const unit = new T.BoxGeometry(1, 1, 1);
+  const silk = new T.MeshBasicMaterial({color: 0xeef1fa, transparent: true, opacity: .5});
+  function silkRect(x0, x1, z0, z1) {
+    const t = 0.05;
+    [[x0, x1, z0, z0], [x0, x1, z1, z1], [x0, x0, z0, z1], [x1, x1, z0, z1]].forEach(([a, b, c, d]) => {
+      const m = new T.Mesh(unit, silk); m.scale.set(Math.abs(b - a) + t, 0.01, Math.abs(d - c) + t);
+      m.position.set((a + b) / 2, 0.006, (c + d) / 2); scene.add(m);
+    });
+  }
+  function busMat(color, o) {
+    o = o || {};
+    const m = new T.MeshStandardMaterial({color: new T.Color(o.base || color).multiplyScalar(o.base ? 1 : 0.55), emissive: new T.Color(color), emissiveIntensity: o.rest != null ? o.rest : 0.22, roughness: .35, metalness: .65});
+    m.userData.rest = m.emissiveIntensity; return m;
+  }
+  const nrm = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1; return {x: -dz / L, z: dx / L}; };
+  function offsetLine(p, o) {
+    return p.map((q, i) => {
+      const nIn = i > 0 ? nrm(p[i - 1], q) : null, nOut = i < p.length - 1 ? nrm(q, p[i + 1]) : null;
+      let n = nIn || nOut;
+      if (nIn && nOut) { const k = 1 / (1 + nIn.x * nOut.x + nIn.z * nOut.z); n = {x: (nIn.x + nOut.x) * k, z: (nIn.z + nOut.z) * k}; }
+      return {x: q.x + n.x * o, z: q.z + n.z * o};
+    });
+  }
+  function trace(points, lines, mat) {
+    const gap = 0.075, w = 0.04;
+    for (let li = 0; li < lines; li++) {
+      const pts = offsetLine(points, (li - (lines - 1) / 2) * gap);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+        const m = new T.Mesh(unit, mat); m.scale.set(L + w, 0.03, w); m.position.set((a.x + b.x) / 2, 0.016, (a.z + b.z) / 2); m.rotation.y = -Math.atan2(dz, dx);
+        m.receiveShadow = true; scene.add(m);
+      }
+      [pts[0], pts[pts.length - 1]].forEach(p => { const pad = new T.Mesh(unit, mat); pad.scale.set(0.07, 0.032, 0.07); pad.position.set(p.x, 0.016, p.z); scene.add(pad); });
+    }
+  }
+  function glowBus(m) {
+    if (!m) return;
+    gsap.killTweensOf(m);
+    gsap.timeline().to(m, {emissiveIntensity: 1.8, duration: 0.2}).to(m, {emissiveIntensity: m.userData.rest, duration: 1.4});
+  }
+  function label(html, cls, x, y, z, parent) {
+    const el = document.createElement('div'); el.className = cls; el.innerHTML = html;
+    const o = new T.CSS2DObject(el); o.position.set(x, y, z); (parent || scene).add(o); el._obj = o; return el;
+  }
+  function zone(text, x, z, color) { const el = label(text, 'zone', x, 0.05, z); if (color) el.style.setProperty('--c', color); return el; }
+
+  const pinSpots = [], recs = {}, pickables = [];
+  const dotMat = new T.MeshBasicMaterial({color: P.pinDot});
+  function chip(key, o) {
+    const w = o.w || 1.4, d = o.d || 1.2, h = o.h || (o.cell ? 0.28 : 0.34);
+    const g = new T.Group(); g.position.set(o.x, 0, o.z);
+    const mat = new T.MeshStandardMaterial({color: o.body || (o.cell ? P.cell : P.chip), roughness: .42, metalness: o.metal || .22, emissive: new T.Color(0xffffff), emissiveIntensity: 0});
+    const body = new T.Mesh(unit, mat); body.scale.set(w, h, d); body.position.y = h / 2 + 0.03; body.castShadow = true; body.receiveShadow = true; g.add(body);
+    body.userData.key = key; pickables.push(body);
+    if (!o.metal) { const dot = new T.Mesh(new T.CircleGeometry(0.05, 16), dotMat); dot.rotation.x = -Math.PI / 2; dot.position.set(-w / 2 + 0.14, h + 0.035, -d / 2 + 0.14); g.add(dot); }
+    if (!o.noPins) {
+      const n = Math.max(2, Math.floor((w - 0.2) / 0.22));
+      for (let i = 0; i < n; i++) { const px = -w / 2 + 0.14 + i * ((w - 0.28) / (n - 1)); pinSpots.push([o.x + px, o.z - d / 2 - 0.07], [o.x + px, o.z + d / 2 + 0.07]); }
+    }
+    scene.add(g);
+    const el = label('<span class="nm">' + (o.nm || key) + '</span><span class="vl"></span><span class="sb"></span>', 'tag' + (o.cell ? ' cell' : ''), 0, h + 0.08, 0, g);
+    const rec = {key: key, cell: !!o.cell, g: g, mat: mat, el: el, val: el.querySelector('.vl'), sub: el.querySelector('.sb'), h: h, x: o.x, z: o.z};
+    recs[key] = rec; return rec;
+  }
+  function finishPins() {
+    const pinGeo = new T.BoxGeometry(0.07, 0.05, 0.16), pinMat = new T.MeshStandardMaterial({color: 0xc9ced1, metalness: .9, roughness: .3});
+    const pins = new T.InstancedMesh(pinGeo, pinMat, Math.max(1, pinSpots.length)), mtx = new T.Matrix4();
+    pinSpots.forEach(([x, z], i) => { mtx.makeTranslation(x, 0.045, z); pins.setMatrixAt(i, mtx); });
+    scene.add(pins);
+  }
+
+  // packets: a small sphere with an additive halo and a pill label
+  const haloCv = document.createElement('canvas'); haloCv.width = haloCv.height = 64;
+  const hg = haloCv.getContext('2d'), rg = hg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(.35, 'rgba(255,255,255,.35)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  hg.fillStyle = rg; hg.fillRect(0, 0, 64, 64);
+  const haloTex = new T.CanvasTexture(haloCv);
+  const pktGeo = new T.SphereGeometry(0.13, 20, 14);
+  const live = new Set();
+  function removePacket(p) {
+    scene.remove(p.mesh); if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+    p.mesh.material.dispose(); p.halo.material.dispose(); live.delete(p);
+  }
+  function fly(path, text, color, o) {
+    o = o || {};
+    const y = o.y != null ? o.y : 0.8;
+    const v = path.map(p => new T.Vector3(p.x, y, p.z));
+    const mesh = new T.Mesh(pktGeo, new T.MeshBasicMaterial({color: new T.Color(color)}));
+    const halo = new T.Sprite(new T.SpriteMaterial({map: haloTex, color: new T.Color(color), blending: T.AdditiveBlending, depthWrite: false, transparent: true}));
+    halo.scale.set(1.1, 1.1, 1.1); mesh.add(halo);
+    const el = document.createElement('div'); el.className = 'pkt'; el.style.setProperty('--c', color); el.textContent = text;
+    const lab = new T.CSS2DObject(el); lab.position.set(0, 0.42, 0); mesh.add(lab);
+    mesh.position.copy(v[0]); mesh.scale.setScalar(0.01); mesh.visible = false; scene.add(mesh);
+    const p = {mesh: mesh, halo: halo, el: el}; live.add(p);
+    let L = 0; for (let i = 1; i < v.length; i++) L += v[i].distanceTo(v[i - 1]);
+    const total = o.dur || Math.max(0.5, Math.min(2.2, L / 7));
+    const tl = gsap.timeline({onComplete: () => removePacket(p)});
+    tl.call(() => { mesh.visible = true; });
+    tl.to(mesh.scale, {x: 1, y: 1, z: 1, duration: 0.18, ease: 'back.out(2)'});
+    for (let i = 1; i < v.length; i++) { const seg = v[i].distanceTo(v[i - 1]); tl.to(mesh.position, {x: v[i].x, y: v[i].y, z: v[i].z, duration: L ? total * seg / L : 0.1, ease: 'none'}); }
+    tl.to(mesh.scale, {x: 0.01, y: 0.01, z: 0.01, duration: 0.18, ease: 'power2.in'});
+    return tl;
+  }
+  function clearPackets() { Array.from(live).forEach(removePacket); }
+
+  const active = new Set();
+  function hi(rec, color) {
+    if (!rec) return;
+    rec.mat.emissive.set(color).convertSRGBToLinear(); gsap.to(rec.mat, {emissiveIntensity: rec.cell ? 0.42 : 0.34, duration: 0.3, overwrite: 'auto'});
+    rec.el.classList.add('on'); active.add(rec);
+  }
+  function clear() {
+    active.forEach(r => { gsap.to(r.mat, {emissiveIntensity: 0, duration: 0.5, overwrite: 'auto'}); r.el.classList.remove('on'); });
+    active.clear();
+  }
+  function pop(rec, big) {
+    if (!rec || RM) return;
+    gsap.fromTo(rec.g.scale, {x: 1.12, y: big ? 1.8 : 1.5, z: 1.12}, {x: 1, y: 1, z: 1, duration: 0.65, ease: 'elastic.out(1,0.5)'});
+  }
+
+  // camera views keep the whole subject in frame on narrow screens
+  const views = opts.views || {overview: {pos: [0, 17, 14.5], tgt: [0, 0, 0.4], want: 1.55}};
+  function viewFor(name) {
+    const b = views[name] || views.overview;
+    const tgt = new T.Vector3(...b.tgt), pos = new T.Vector3(...b.pos);
+    const want = b.want || 1.25;
+    let f = camera.aspect < want ? Math.min(2.4, want / camera.aspect) : 1;
+    if (name === 'overview' || !views[name]) {
+      // the overview (and FIT) must show the whole board width, also on narrow phone screens,
+      // leaving room for the zoom buttons at the right edge
+      const tanH = Math.tan(T.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+      const need = (B.w / 2 + 0.5) / (tanH * 0.92) + B.d * 0.25;
+      f = Math.max(f, need / pos.distanceTo(tgt));
+      controls.maxDistance = Math.max(controls.maxDistance, need * 1.3);
+      if (scene.fog) { scene.fog.near = Math.max(scene.fog.near, need * 1.1); scene.fog.far = Math.max(scene.fog.far, need * 2.6); }
+    }
+    pos.sub(tgt).multiplyScalar(f).add(tgt);
+    return {pos: pos, tgt: tgt};
+  }
+  function setView(name, instant) {
+    const v = viewFor(name), d = (RM || instant) ? 0 : 1.2;
+    const k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: v.pos.x, y: v.pos.y, z: v.pos.z, duration: d, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+    gsap.to(controls.target, {x: v.tgt.x, y: v.tgt.y, z: v.tgt.z, duration: d, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+  }
+  function focusOn(x, z, dist) {
+    const d = (dist || 7) * (camera.aspect < 1.2 ? Math.min(2.2, 1.25 / camera.aspect) : 1);
+    const k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: x * 0.8, y: d * 1.15, z: z + d, duration: RM ? 0 : 1.0, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+    gsap.to(controls.target, {x: x, y: 0, z: z, duration: RM ? 0 : 1.0, ease: 'power2.inOut', overwrite: 'auto'}).timeScale(k);
+  }
+
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); renderer.domElement.style.width = w + 'px'; renderer.domElement.style.height = h + 'px';
+    labelR.setSize(w, h);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    stage.style.setProperty('--lab', Math.max(7, Math.min(12, w / 92)) + 'px');
+  }
+  // zoom buttons (+, -, Fit) and keys (+, -, 0): the mouse wheel and pinch still work, but buttons always do
+  function zoom(f) {
+    const t = controls.target, off = camera.position.clone().sub(t);
+    off.setLength(Math.max(controls.minDistance, Math.min(controls.maxDistance, off.length() * f)));
+    const p = t.clone().add(off), k = 1 / (gsap.globalTimeline.timeScale() || 1);
+    gsap.to(camera.position, {x: p.x, y: p.y, z: p.z, duration: RM ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'}).timeScale(k);
+  }
+  if (opts.zoomUI !== false) {
+    if (!document.getElementById('lab3d-zoom-css')) {
+      const st = document.createElement('style'); st.id = 'lab3d-zoom-css';
+      st.textContent = '.zoomctl{position:absolute;z-index:4;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;padding:4px;background:' + P.uiBg + ';border:1px solid ' + P.uiLine + ';border-radius:6px;backdrop-filter:blur(6px)}' +
+        '.zoomctl button{width:38px;height:34px;border:0;border-radius:4px;background:transparent;color:' + P.uiText + ';font:600 18px/1 ' + P.font + ';cursor:pointer;padding:0}' +
+        '.zoomctl button.fit{font-size:10px;letter-spacing:.06em;height:28px}.zoomctl button:hover{background:' + P.uiHover + ';color:' + P.uiAccent + '}' +
+        '.zoomctl button:focus-visible{outline:2px solid ' + P.uiAccent + ';outline-offset:1px}@media(max-width:520px){.zoomctl{right:10px}.zoomctl button{width:34px;height:32px}}';
+      document.head.appendChild(st);
+    }
+    const box = document.createElement('div'); box.className = 'zoomctl'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Zoom');
+    box.innerHTML = '<button type="button" data-z="in" aria-label="Zoom in" title="Zoom in (+)">+</button>' +
+      '<button type="button" data-z="out" aria-label="Zoom out" title="Zoom out (-)">&minus;</button>' +
+      '<button type="button" class="fit" data-z="fit" aria-label="Show the whole board" title="Show the whole board (0)">FIT</button>';
+    stage.appendChild(box);
+    ['pointerdown', 'pointerup', 'wheel', 'click'].forEach(ev => box.addEventListener(ev, e => e.stopPropagation()));
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.z === 'in') zoom(0.75); else if (b.dataset.z === 'out') zoom(1.33); else setView(opts.fitView || 'overview');
+    });
+    document.addEventListener('keydown', e => {
+      const t = e.target, tag = t && t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+      if (e.key === '+' || e.key === '=') zoom(0.75);
+      else if (e.key === '-' || e.key === '_') zoom(1.33);
+      else if (e.key === '0') setView(opts.fitView || 'overview');
+    });
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); labelR.render(scene, camera); })();
+
+  // picking: click (not drag) on a chip body
+  const ray = new T.Raycaster(), mouse = new T.Vector2(); let down = null, pickCb = null;
+  labelR.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  labelR.domElement.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || !pickCb) return;
+    const r = labelR.domElement.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hit = ray.intersectObjects(pickables, false)[0];
+    if (hit) pickCb(hit.object.userData.key);
+  });
+
+  function intro() {
+    const v = viewFor('overview'); camera.position.copy(v.pos); controls.target.copy(v.tgt);
+    if (RM) return;
+    gsap.from(camera.position, {x: v.pos.x - 4, y: v.pos.y + 12, z: v.pos.z + 10, duration: 1.8, ease: 'power3.out'});
+    gsap.from(Object.values(recs).map(r => r.g.position), {y: 2.2, duration: 0.7, ease: 'back.out(1.6)', stagger: 0.03, delay: 0.2});
+  }
+
+  const labApi = {T: T, scene: scene, camera: camera, controls: controls, renderer: renderer, recs: recs,
+    chip: chip, finishPins: finishPins, silkRect: silkRect, zone: zone, label: label, busMat: busMat, trace: trace, glowBus: glowBus,
+    fly: fly, clearPackets: clearPackets, hi: hi, clear: clear, pop: pop, setView: setView, focusOn: focusOn, intro: intro, zoom: zoom,
+    onPick: cb => { pickCb = cb; }, unit: unit};
+  (window.__labs = window.__labs || []).push(labApi);   // lets tests reach the camera
+  return labApi;
+}
+// LAB3D END
+// MATH START: plain functions. Every number in the rounds comes from these (a node test checks them).
+const M = {
+  STD: [2, 4, 6, 8, 10, 12],                       // standard pole counts
+  ns: (f, P) => 120 * f / P,                        // synchronous speed, RPM
+  poles(nr, f) { let p = null; M.STD.forEach(P => { if (M.ns(f, P) > nr) p = P; }); return p; },   // smallest standard Ns above the nameplate RPM
+  polesBelow: (nr, f) => M.STD.find(P => M.ns(f, P) < nr),                                       // the common mistake: the speed below
+  rawPoles: (nr, f) => 120 * f / nr,                // P computed from the rotor speed (not a whole number)
+  slipRpm: (ns, nr) => ns - nr,
+  slip: (ns, nr) => (ns - nr) / ns,
+  slipOverNr: (ns, nr) => (ns - nr) / nr,           // the common mistake: dividing by the rotor speed
+  pct: s => s * 100,
+  fr: (s, f) => s * f,
+  vfdNs: (fset, P) => 120 * fset / P,               // a VFD changes f, so Ns follows the set frequency
+  // teaching model (per unit, constant flux): R2 = 0.04, X20 = 0.20, E20 = 1, rated slip 0.0417, magnetizing 0.4
+  R2: 0.04, X20: 0.20, SR: 0.0417, MAG: 0.4, VFD_SLIP_RPM: 75,
+  x2: s => s * M.X20,
+  z2: s => Math.sqrt(M.R2 * M.R2 + Math.pow(s * M.X20, 2)),
+  i2: s => s / M.z2(s),
+  pf: s => M.R2 / M.z2(s),
+  torque: s => s * M.R2 / (M.R2 * M.R2 + Math.pow(s * M.X20, 2)),
+  iLine: (s, fla) => fla * Math.sqrt(M.MAG * M.MAG + Math.pow(M.i2(s) / M.i2(M.SR), 2) * (1 - M.MAG * M.MAG)),
+  loadSpeed(ns, load) { let lo = 0, hi = 0.2; for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (M.torque(mid) < load) lo = mid; else hi = mid; } return ns * (1 - (lo + hi) / 2); }
+};
+const f0 = x => String(Math.round(x)), f1 = x => (Math.round(x * 10) / 10).toFixed(1), f2 = x => x.toFixed(2), f4 = x => x.toFixed(4);
+function derive(m) { m.P = M.poles(m.nr, m.f); m.Ns = M.ns(m.f, m.P); m.s = M.slip(m.Ns, m.nr); m.fr = M.fr(m.s, m.f); return m; }
+// the Biscayne Cold Storage motors (fictional), from the lesson plan
+const MOT = {
+  C1: derive({id: 'C-1', name: 'Compressor motor C-1 · 460 V, 60 Hz, 3450 RPM', v: 460, f: 60, nr: 3450}),
+  CV2: derive({id: 'CV-2', name: 'Conveyor motor CV-2 · 208 V, 60 Hz, 1725 RPM, 1/2 HP, FLA 2.4 A', v: 208, f: 60, nr: 1725, fla: 2.4}),
+  F3: derive({id: 'F-3', name: 'Evaporator fan F-3 · 208 V, 60 Hz, 1140 RPM', v: 208, f: 60, nr: 1140}),
+  P4: derive({id: 'P-4', name: 'Old pump motor P-4 · 460 V, 60 Hz, 870 RPM', v: 460, f: 60, nr: 870})
+};
+// the chip values the board shows for a motor
+function chipsFor(m) {
+  return {
+    supply: {nm: 'SUPPLY', val: m.f + ' Hz', sub: '3-PHASE ' + m.v + ' V'},
+    plate: {nm: 'NAMEPLATE ' + m.id, val: m.nr + ' RPM', sub: m.P + ' POLES'},
+    field: {nm: 'FIELD Ns', val: f0(m.Ns) + ' RPM', sub: '120 × f / P'},
+    rotor: {nm: 'ROTOR Nr', val: m.nr + ' RPM', sub: 'TACHOMETER'},
+    slip: {nm: 'SLIP', val: f2(M.pct(m.s)) + '%', sub: 'fr ' + f1(m.fr) + ' Hz'}
+  };
+}
+
+// ---- rounds: {id, topic, mot, ask, q, opts: [[text, points, why, short, value]], pre, hide, post, m0, steps} ----
+// steps: {t, hi, fly: [[path, label]], m: motor speeds at the start of the step, set: chip values at its end}
+const ROUNDS = [
+  (() => {
+    const m = MOT.P4, ns = M.ns(60, 8), pairs = M.ns(60, 4), noP = 120 * 60;
+    return {id: 'ns', topic: 'Synchronous speed', mot: m, ask: 'field',
+      q: 'Biscayne Cold Storage still runs an old pump motor, P-4. The motor shop says it has 8 poles, and it runs on the 60 Hz supply. What is its synchronous speed (Ns), the speed of the rotating magnetic field?',
+      hide: {field: {val: '?', sub: 'YOUR CALL'}},
+      opts: [
+        ['Ns = 120 × 60 / 8 = ' + f0(ns) + ' RPM', 10, 'Ns = 120 × f / P = 120 × 60 / 8 = ' + f0(120 * 60) + ' / 8 = ' + f0(ns) + ' RPM. The field turns at ' + f0(ns) + ' RPM, and the rotor follows a little slower (' + m.nr + ' RPM on the nameplate).', f0(ns) + ' RPM', ns],
+        ['Ns = 120 × 60 / 4 = ' + f0(pairs) + ' RPM', 4, 'The formula is right, but P is the number of poles (8), not the pole pairs (4). Dividing by 4 doubles the answer.', f0(pairs) + ' RPM (pole pairs)', pairs],
+        [m.nr + ' RPM, the nameplate speed', 3, m.nr + ' RPM is the rotor speed at full load (Nr). The field always turns a little faster than the rotor, and that gap is the slip.', m.nr + ' RPM (rotor speed)', m.nr],
+        ['Ns = 120 × 60 = ' + f0(noP) + ' RPM', 0, 'The formula divides by the number of poles. Without that step the answer is 8 times too big.', f0(noP) + ' RPM (no poles)', noP]],
+      m0: {ns: ns, nr: m.nr, dir: 1},
+      steps: [
+        {t: 'The supply feeds 60 Hz into the stator coils, so f = 60.', hi: ['supply', 'motor'], fly: [['supplyIn', '60 Hz']]},
+        {t: 'The stator is wound for 8 poles (4 north and 4 south). The more poles, the longer the field takes to go once around.', hi: ['plate', 'motor'], fly: [['plateIn', '8 POLES']]},
+        {t: 'Ns = 120 × f / P = 120 × 60 / 8 = ' + f0(120 * 60) + ' / 8 = ' + f0(ns) + ' RPM. That is the speed of the field arrow.', hi: ['motor', 'field'], fly: [['toField', 'Ns ' + f0(ns)]], set: {field: {val: f0(ns) + ' RPM', sub: '120 × 60 / 8'}}},
+        {t: 'The rotor follows at ' + m.nr + ' RPM, ' + f0(M.slipRpm(ns, m.nr)) + ' RPM behind the field. That gap is the slip speed, and the slip rounds use it.', hi: ['motor', 'rotor'], fly: [['toRotor', 'Nr ' + m.nr]]}]};
+  })(),
+
+  (() => {
+    const L = [MOT.C1, MOT.CV2, MOT.F3, MOT.P4];
+    const good = L.map(m => M.poles(m.nr, 60)), below = L.map(m => M.polesBelow(m.nr, 60)), raw = L.map(m => M.rawPoles(m.nr, 60)), pairs = good.map(p => p / 2);
+    return {id: 'poles', topic: 'Poles from the nameplate', mot: MOT.C1, ask: 'plate',
+      q: 'Rosa Delgado, the lead technician, is filling in the nameplate worksheet. The four motors read 3450, 1725, 1140, and 870 RPM at 60 Hz, but the pole count is not printed. Which pole counts are right for C-1, CV-2, F-3, and P-4, in that order?',
+      hide: {plate: {sub: '? POLES'}, field: {val: '?', sub: 'YOUR CALL'}},
+      opts: [
+        [good.join(', ') + ' poles (Ns ' + L.map(m => f0(m.Ns)).join(', ') + ' RPM)', 10, 'Pick the smallest standard Ns that is above the nameplate speed. At 60 Hz the standard speeds are 3600, 1800, 1200, and 900 RPM. 3450 is just under 3600 (120 × 60 / 2), so C-1 has 2 poles. In the same way 1725 is under 1800 (4 poles), 1140 is under 1200 (6 poles), and 870 is under 900 (8 poles).', good.join(', ') + ' poles', good],
+        [below.join(', ') + ' poles (Ns ' + below.map(p => f0(M.ns(60, p))).join(', ') + ' RPM)', 2, 'These are the standard speeds just below each nameplate speed. The rotor of an induction motor can never run as fast as its field, so Ns must be above the nameplate RPM.', below.join(', ') + ' poles (speed below)', below],
+        [raw.map(f2).join(', ') + ' poles, from P = 120 × 60 / Nr', 5, 'Close, but the formula needs Ns, not the rotor speed, and poles always come as whole, even numbers. Each result rounds down to the standard count: 2, 4, 6, and 8.', 'Raw P from Nr', raw],
+        [pairs.join(', ') + ' poles', 4, 'Those are the pole pairs. The formula and the nameplate use poles, which is twice the pairs: 2, 4, 6, and 8.', pairs.join(', ') + ' (pole pairs)', pairs]],
+      m0: {ns: MOT.C1.Ns, nr: MOT.C1.nr, dir: 1},
+      steps: L.map(m => ({
+        t: m.id + ' reads ' + m.nr + ' RPM. The smallest standard speed above it is ' + f0(m.Ns) + ' RPM, and ' + f0(m.Ns) + ' = 120 × 60 / ' + m.P + ', so ' + m.id + ' has ' + m.P + ' poles. Its slip is ' + f2(M.pct(m.s)) + '%.',
+        hi: ['plate', 'motor', 'field'], fly: [['plateIn', m.nr + ' RPM'], ['toField', 'Ns ' + f0(m.Ns)]], m: {ns: m.Ns, nr: m.nr},
+        set: chipsFor(m)}))};
+  })(),
+
+  (() => {
+    const m = MOT.C1, ns = m.Ns, nr = m.nr, sr = M.slipRpm(ns, nr), s = M.slip(ns, nr), fr = M.fr(s, 60);
+    const sWrong = M.slipOverNr(ns, nr), frWrong = M.fr(sWrong, 60), ratio = nr / ns, frRatio = M.fr(ratio, 60);
+    return {id: 'pdf', topic: 'Slip and rotor frequency', mot: m, ask: 'slip',
+      q: 'Compressor motor C-1 is the case study. It runs at 3450 RPM on 60 Hz, and it has 2 poles, so Ns = 3600 RPM. What are its slip (as a decimal and as a percent) and its rotor frequency at full load?',
+      hide: {slip: {val: '?', sub: 'fr ?'}},
+      opts: [
+        ['s = ' + f4(s) + ' (' + f2(M.pct(s)) + '%), fr = ' + f1(fr) + ' Hz', 10, 'Slip speed = Ns - Nr = 3600 - 3450 = ' + f0(sr) + ' RPM. s = ' + f0(sr) + ' / 3600 = ' + f4(s) + ', so the percent slip is ' + f2(M.pct(s)) + '%. Rotor frequency fr = s × f = ' + f4(s) + ' × 60 = ' + f1(fr) + ' Hz.', f2(M.pct(s)) + '%, ' + f1(fr) + ' Hz', [s, M.pct(s), fr]],
+        ['s = ' + f4(sWrong) + ' (' + f2(M.pct(sWrong)) + '%), fr = ' + f2(frWrong) + ' Hz', 5, 'The slip speed (' + f0(sr) + ' RPM) is right, but slip is divided by Ns (3600), not by the rotor speed (3450). ' + f0(sr) + ' / 3450 gives ' + f4(sWrong) + ', a little too high.', 'Divided by Nr', [sWrong, M.pct(sWrong), frWrong]],
+        ['s = ' + f4(s) + ' (' + f2(M.pct(s)) + '%), fr = 60 Hz', 4, 'The slip is right, but once the rotor turns it no longer sees the supply frequency. fr = s × f, so the rotor currents change direction only ' + f1(fr) + ' times a second.', f2(M.pct(s)) + '%, 60 Hz', [s, M.pct(s), 60]],
+        ['s = ' + f4(ratio) + ' (' + f2(M.pct(ratio)) + '%), fr = ' + f1(frRatio) + ' Hz', 0, '3450 / 3600 = ' + f4(ratio) + ' says the rotor runs at ' + f2(M.pct(ratio)) + '% of Ns. Slip is the part left over: 1 - ' + f4(ratio) + ' = ' + f4(1 - ratio) + '.', 'Nr / Ns', [ratio, M.pct(ratio), frRatio]]],
+      m0: {ns: ns, nr: nr, dir: 1},
+      steps: [
+        {t: 'Ns = 120 × 60 / 2 = 3600 RPM. The field arrow sweeps at 3600 RPM.', hi: ['supply', 'motor', 'field'], fly: [['supplyIn', '60 Hz'], ['toField', 'Ns 3600']]},
+        {t: 'The tachometer reads the rotor at 3450 RPM. Slip speed = Ns - Nr = 3600 - 3450 = ' + f0(sr) + ' RPM.', hi: ['motor', 'rotor', 'slip'], fly: [['toRotor', 'Nr 3450'], ['nrDown', f0(sr) + ' RPM']], set: {slip: {val: f0(sr) + ' RPM', sub: 'SLIP SPEED'}}},
+        {t: 's = ' + f0(sr) + ' / 3600 = ' + f4(s) + '. Times 100, the percent slip is ' + f2(M.pct(s)) + '%. Always divide by Ns, the field speed.', hi: ['field', 'slip'], fly: [['nsDown', '÷ 3600']], set: {slip: {val: f2(M.pct(s)) + '%', sub: 's = ' + f4(s)}}},
+        {t: 'fr = s × f = ' + f4(s) + ' × 60 = ' + f1(fr) + ' Hz. The field slips past each rotor bar only ' + f1(fr) + ' times a second, so the rotor voltage and current are small at full speed.', hi: ['supply', 'slip', 'motor'], fly: [['toSlip', 'fr ' + f1(fr) + ' Hz']], set: {slip: {val: f2(M.pct(s)) + '%', sub: 'fr ' + f1(fr) + ' Hz'}}}]};
+  })(),
+
+  (() => {
+    const m = MOT.CV2, ns = m.Ns, n50 = Math.round(M.loadSpeed(ns, 0.5)), n100 = Math.round(M.loadSpeed(ns, 1));
+    const s50 = M.slip(ns, n50), s100 = M.slip(ns, n100), fr50 = M.fr(s50, 60), fr100 = M.fr(s100, 60);
+    return {id: 'load', topic: 'More load, more slip', mot: m, ask: 'rotor',
+      q: 'Conveyor motor CV-2 (4 poles, Ns 1800 RPM) runs at ' + n50 + ' RPM with a half load of boxes. Rosa adds boxes until the motor is at full load. What happens to the speed and the slip?',
+      pre: {plate: {nm: 'LOAD', val: '50%', sub: 'CV-2 · 4 POLES'}, rotor: {val: n50 + ' RPM'}, slip: {val: f2(M.pct(s50)) + '%', sub: 'fr ' + f1(fr50) + ' Hz'}},
+      opts: [
+        ['The speed drops to about ' + n100 + ' RPM. Slip grows from ' + f2(M.pct(s50)) + '% to ' + f2(M.pct(s100)) + '% and the rotor frequency rises from ' + f1(fr50) + ' to ' + f1(fr100) + ' Hz, so more rotor current makes more torque', 10, 'More load slows the rotor a little. The bigger gap to the field (' + f0(ns - n50) + ' RPM, then ' + f0(ns - n100) + ' RPM) means the bars cut more flux, so more voltage and current are induced and the torque rises to meet the load. Half load: ' + f0(ns - n50) + ' / 1800 = ' + f2(M.pct(s50)) + '%, fr = ' + f1(fr50) + ' Hz. Full load: ' + f0(ns - n100) + ' / 1800 = ' + f2(M.pct(s100)) + '%, fr = ' + f1(fr100) + ' Hz.', 'Slower, more slip', [n100, M.pct(s50), M.pct(s100), fr50, fr100]],
+        ['The speed stays at ' + n50 + ' RPM and only the current rises', 2, 'The current does rise, but only because the rotor slows down. An induction motor needs more slip to make more torque.', 'Same speed, more current', [n50]],
+        ['Ns drops from 1800 to ' + n100 + ' RPM', 3, 'Ns depends only on the frequency and the poles, so the field stays at 1800 RPM. It is the rotor speed that drops to about ' + n100 + ' RPM.', 'Ns drops', [n100]],
+        ['The slip gets smaller because the motor works harder', 0, 'It is the other way around. Harder work means a slower rotor and a bigger slip.', 'Less slip', [0]]],
+      m0: {ns: ns, nr: n50, dir: 1},
+      steps: [
+        {t: 'Half load: the rotor turns at ' + n50 + ' RPM. Slip = (1800 - ' + n50 + ') / 1800 = ' + f2(M.pct(s50)) + '%, and fr = ' + f4(s50) + ' × 60 = ' + f1(fr50) + ' Hz.', hi: ['motor', 'rotor', 'slip'], fly: [['toRotor', 'Nr ' + n50], ['toSlip', f2(M.pct(s50)) + '%']]},
+        {t: 'Rosa adds boxes. The load torque rises and the rotor slows down, while the field keeps turning at 1800 RPM.', hi: ['plate', 'motor'], fly: [['plateIn', 'LOAD 100%']], m: {nr: n100}, set: {plate: {val: '100%'}, rotor: {val: n100 + ' RPM'}}},
+        {t: 'Full load: ' + n100 + ' RPM. Slip = (1800 - ' + n100 + ') / 1800 = ' + f2(M.pct(s100)) + '%, and fr = ' + f1(fr100) + ' Hz. The field cuts the bars faster, so the rotor current and torque rise.', hi: ['rotor', 'slip'], fly: [['nrDown', f0(ns - n100) + ' RPM']], set: {slip: {val: f2(M.pct(s100)) + '%', sub: 'fr ' + f1(fr100) + ' Hz'}}},
+        {t: 'Ns never changed: the field still turns at 1800 RPM. Only the rotor speed and the slip follow the load.', hi: ['field', 'motor'], fly: [['toField', 'Ns 1800']]}]};
+  })(),
+
+  (() => {
+    const m = MOT.CV2, s = M.slip(m.Ns, 0), fr = M.fr(s, 60), i = M.iLine(s, m.fla), ratio = i / m.fla, t1 = M.torque(1), tMax = M.torque(M.R2 / M.X20);
+    return {id: 'start', topic: 'Starting current', mot: m, ask: 'supply',
+      q: 'Rosa clamps the meter on one line lead of CV-2 (FLA 2.4 A, the full-load amps) and starts the motor across the line. The inrush capture reads far above 2.4 A. Why is the starting current so high?',
+      pre: {rotor: {val: '0 RPM', sub: 'STANDSTILL'}, supply: {sub: 'FLA 2.4 A'}},
+      hide: {supply: {sub: 'INRUSH ?'}, slip: {val: '?', sub: 'fr ?'}},
+      post: {supply: {sub: 'INRUSH ' + f1(i) + ' A'}, slip: {val: 's = 1', sub: 'fr 60 Hz'}},
+      opts: [
+        ['At standstill the slip is 1. The field cuts the still rotor bars at the full 1800 RPM, so the rotor sees 60 Hz and the largest induced voltage, and the current is very high (about ' + f1(i) + ' A, ' + f1(ratio) + ' × FLA, in our model)', 10, 's = (1800 - 0) / 1800 = 1, so fr = 1 × 60 = 60 Hz, and the induced rotor voltage E2 = s × E20 is at its full value. The rotor current reaches ' + f2(M.i2(1)) + ' per unit and the stator must supply it: about ' + f1(i) + ' A in our simplified model. Real motors draw roughly 5 to 7 times full-load current at start.', 's = 1, 60 Hz in the rotor', [s, fr, i, ratio]],
+        ['The motor needs extra voltage to get moving', 0, 'The supply voltage is the same at start. The current is high because the voltage induced in the still rotor is at its largest.', 'Extra voltage', [0]],
+        ['The torque is at its maximum at start, and torque takes current', 3, 'Current is highest at start, but torque is not. In the model the starting torque is ' + f2(t1) + ' × rated, while the maximum (pull-out) torque of ' + f2(tMax) + ' × rated happens near s = 0.2.', 'Maximum torque at start', [t1]],
+        ['The rotor frequency is 2.5 Hz at start, so the rotor reactance is very small', 0, '2.5 Hz is the full-load rotor frequency. At standstill s = 1, so the rotor sees the full 60 Hz.', '2.5 Hz at start', [2.5]]],
+      m0: {ns: m.Ns, nr: 0, dir: 1},
+      steps: [
+        {t: 'Start: the rotor is still, so Nr = 0 and s = (1800 - 0) / 1800 = 1.', hi: ['motor', 'rotor'], fly: [['toRotor', 'Nr 0']], set: {slip: {val: 's = 1', sub: 'fr ?'}}},
+        {t: 'The field sweeps past the still bars at the full 1800 RPM. fr = 1 × 60 = 60 Hz, and the induced rotor voltage is at its maximum.', hi: ['motor', 'slip'], fly: [['toSlip', 'fr 60 Hz']], set: {slip: {val: 's = 1', sub: 'fr 60 Hz'}}},
+        {t: 'The rotor current is about ' + f2(M.i2(1)) + ' per unit, so the line draws about ' + f1(i) + ' A, ' + f1(ratio) + ' times the 2.4 A FLA (simplified model; real motors draw roughly 5 to 7 times).', hi: ['supply', 'motor'], fly: [['supplyIn', f1(i) + ' A']], set: {supply: {sub: 'INRUSH ' + f1(i) + ' A'}}},
+        {t: 'As the rotor speeds up to 1725 RPM, the slip falls to ' + f2(M.pct(m.s)) + '%, fr drops to ' + f1(m.fr) + ' Hz, and the current settles near the 2.4 A FLA.', hi: ['motor', 'rotor', 'supply'], fly: [['toRotor', 'Nr 1725']], m: {nr: m.nr}, set: {rotor: {val: '1725 RPM', sub: 'FULL SPEED'}, supply: {sub: 'RUN 2.4 A'}, slip: {val: f2(M.pct(m.s)) + '%', sub: 'fr ' + f1(m.fr) + ' Hz'}}}]};
+  })(),
+
+  (() => {
+    const m = MOT.CV2, pf1 = M.pf(1), pfR = M.pf(M.SR), x1 = M.x2(1), xR = M.x2(M.SR), z1 = M.z2(1);
+    return {id: 'pf', topic: 'Power factor at start', mot: m, ask: 'rotor',
+      q: 'A power quality meter shows CV-2 with a very poor power factor in the first moment of the start, then a good one at full speed. In the teaching model the rotor resistance is R2 = 0.04 and the standstill reactance is X20 = 0.20. Why is the power factor poor at start?',
+      pre: {rotor: {val: '0 RPM', sub: 'PF ' + f2(pf1)}, slip: {val: 's = 1', sub: 'fr 60 Hz'}},
+      hide: {rotor: {sub: 'PF ?'}},
+      opts: [
+        ['At start s = 1, so the rotor reactance X2 = s × X20 = ' + f2(x1) + ', five times R2. The current lags far behind the voltage: PF = ' + f2(pf1) + '. At full load X2 drops to ' + f4(xR) + ' and PF rises to ' + f2(pfR), 10, 'Reactance grows with the rotor frequency, and at standstill the rotor sees 60 Hz. PF = R2 / √(R2² + X2²) = 0.04 / √(0.0016 + 0.04) = 0.04 / ' + f4(z1).slice(0, 5) + ' = ' + f2(pf1) + '. At s = 0.0417, X2 = 0.0417 × 0.20 = ' + f4(xR) + ' and PF = ' + f2(pfR) + '.', 'Large reactance at s = 1', [pf1, pfR, x1, xR]],
+        ['The rotor resistance R2 is largest at start', 3, 'In this model R2 stays 0.04 at every speed. What changes is the reactance, X2 = s × X20, which is largest at standstill.', 'Large resistance', [M.R2]],
+        ['The rotor reactance is smallest at start, so the current cannot flow', 2, 'Reactance is part of the story, but it is largest at start, not smallest, because the rotor frequency is highest then (60 Hz).', 'Small reactance', [xR]],
+        ['The supply voltage dips, and a low voltage always means a low power factor', 0, 'A voltage dip can happen during a start, but it does not set the power factor. The ratio of rotor resistance to rotor reactance does.', 'Voltage dip', [0]]],
+      m0: {ns: m.Ns, nr: 0, dir: 1},
+      steps: [
+        {t: 'At start s = 1 and fr = 60 Hz. X2 = 1 × 0.20 = ' + f2(x1) + ', five times the rotor resistance of 0.04.', hi: ['motor', 'slip'], fly: [['toSlip', 'X2 ' + f2(x1)]], set: {rotor: {val: '0 RPM', sub: 'X2 ' + f2(x1)}}},
+        {t: 'PF = 0.04 / √(0.04² + 0.20²) = 0.04 / ' + f4(z1).slice(0, 5) + ' = ' + f2(pf1) + '. The rotor current lags the voltage by a lot.', hi: ['rotor', 'motor'], fly: [['toRotor', 'PF ' + f2(pf1)]], set: {rotor: {val: '0 RPM', sub: 'PF ' + f2(pf1)}}},
+        {t: 'The rotor speeds up to 1725 RPM. s falls to 0.0417 and fr to 2.5 Hz, so X2 = 0.0417 × 0.20 = ' + f4(xR) + '.', hi: ['motor', 'rotor', 'slip'], fly: [['toRotor', 'Nr 1725']], m: {nr: m.nr}, set: {rotor: {val: '1725 RPM', sub: 'X2 ' + f4(xR)}, slip: {val: f2(M.pct(m.s)) + '%', sub: 'fr ' + f1(m.fr) + ' Hz'}}},
+        {t: 'PF = 0.04 / √(0.04² + ' + f4(xR) + '²) = ' + f2(pfR) + '. Now the reactance is tiny next to the resistance, and the rotor current is almost in step with the voltage.', hi: ['rotor'], fly: [['toRotor', 'PF ' + f2(pfR)]], set: {rotor: {val: '1725 RPM', sub: 'PF ' + f2(pfR)}}}]};
+  })(),
+
+  (() => {
+    const m = derive({id: 'SPARE', name: 'Spare motor · 4 poles, 50 Hz, 1440 RPM', v: 400, f: 50, nr: 1440});
+    const n50 = M.ns(50, 4), n60 = M.ns(60, 4), rise = (n60 - n50) / n50 * 100, wrongWay = n50 * 50 / 60, sr = M.slipRpm(n50, m.nr), nr60 = n60 - sr;
+    return {id: 'hz50', topic: 'A 50 Hz motor on 60 Hz', mot: m, ask: 'field',
+      q: 'A spare 4-pole motor arrives from a supplier in Spain. Its nameplate says 50 Hz, 1440 RPM. Rosa wants to know what will happen on the 60 Hz supply at Biscayne Cold Storage, with the voltage rating checked and the same load. What happens to its speed?',
+      opts: [
+        ['Ns rises from ' + f0(n50) + ' to ' + f0(n60) + ' RPM, ' + f0(rise) + '% faster, so the shaft also runs about ' + f0(rise) + '% faster', 10, 'Ns = 120 × f / P. At 50 Hz: 120 × 50 / 4 = ' + f0(n50) + ' RPM. At 60 Hz: 120 × 60 / 4 = ' + f0(n60) + ' RPM. ' + f0(n60) + ' / ' + f0(n50) + ' = ' + (n60 / n50).toFixed(1) + ', a ' + f0(rise) + '% rise. The fan or pump on the shaft turns faster and takes more power, so check the load and the voltage rating first.', f0(rise) + '% faster', [n50, n60, rise]],
+        ['Ns falls from ' + f0(n50) + ' to ' + f0(wrongWay) + ' RPM because the frequency is higher', 2, 'Speed follows the frequency up, not down. Multiplying by 50 / 60 instead of 60 / 50 gives ' + f0(wrongWay) + ' RPM.', 'Falls to ' + f0(wrongWay), [n50, wrongWay]],
+        ['Ns becomes ' + f0(n60) + ' RPM, but the shaft stays at ' + m.nr + ' RPM', 4, 'Ns is right, but the rotor always runs just below the field. When the field turns ' + f0(rise) + '% faster, the rotor follows it.', 'Shaft stays ' + m.nr, [n60, m.nr]],
+        ['Nothing changes: the poles set the speed', 0, 'The poles matter, and so does the frequency. Ns = 120 × f / P has both in it.', 'No change', [n50]]],
+      m0: {ns: n50, nr: m.nr, dir: 1},
+      steps: [
+        {t: 'On 50 Hz: Ns = 120 × 50 / 4 = ' + f0(n50) + ' RPM. The rotor runs at ' + m.nr + ' RPM, ' + f0(sr) + ' RPM behind the field.', hi: ['supply', 'motor', 'field'], fly: [['supplyIn', '50 Hz'], ['toField', 'Ns ' + f0(n50)]]},
+        {t: 'Rosa connects it to the 60 Hz supply. The voltage now alternates 60 times a second instead of 50.', hi: ['supply', 'motor'], fly: [['supplyIn', '60 Hz']], set: {supply: {val: '60 Hz'}}},
+        {t: 'Ns = 120 × 60 / 4 = ' + f0(n60) + ' RPM. ' + f0(n60) + ' / ' + f0(n50) + ' = ' + (n60 / n50).toFixed(1) + ', so the field turns ' + f0(rise) + '% faster.', hi: ['motor', 'field'], fly: [['toField', 'Ns ' + f0(n60)]], m: {ns: n60, nr: nr60}, set: {field: {val: f0(n60) + ' RPM', sub: '120 × 60 / 4'}}},
+        {t: 'The rotor follows the field, still about ' + f0(sr) + ' RPM behind: about ' + f0(nr60) + ' RPM. The load turns faster too, so check the voltage rating and the load before leaving it running.', hi: ['motor', 'rotor'], fly: [['toRotor', 'Nr ' + f0(nr60)]], set: {rotor: {val: 'about ' + f0(nr60), sub: 'ON 60 Hz'}}}]};
+  })(),
+
+  (() => {
+    const m = MOT.CV2;
+    return {id: 'reverse', topic: 'Reversing a motor', mot: m, ask: 'supply',
+      q: 'After a wiring change, conveyor CV-2 runs backward and pushes boxes the wrong way. The motor leads are marked L1 to L3. What is the correct fix?',
+      pre: {supply: {sub: 'L1 L2 L3'}, rotor: {sub: 'BACKWARD'}},
+      opts: [
+        ['Lock out and tag out the disconnect, then swap any two of the leads (for example L1 and L2)', 10, 'Swapping any two leads reverses the phase sequence (the order in which the phases peak), so the rotating field and the rotor turn the other way. The change is made only with the power locked out and tagged out.', 'Lockout, swap two leads', 'swap-two'],
+        ['Swap two leads while the conveyor is running, to save time', 3, 'Swapping two leads is the right idea, but never work on live leads. Lockout/tagout comes first, every time.', 'Swap two leads live', 'swap-live'],
+        ['Move every lead one terminal over (L1 to the L2 terminal, and so on around)', 2, 'Rolling all the leads keeps the same phase sequence, so the field turns the same way and the motor still runs backward.', 'Roll every lead', 'roll'],
+        ['Swap the two ends of one lead, like reversing a DC motor', 0, 'A three-phase lead has no plus and minus to swap. The direction comes from the order in which the phases peak.', 'Flip one lead', 'flip']],
+      m0: {ns: m.Ns, nr: m.nr, dir: -1},
+      steps: [
+        {t: 'Now: the phase order makes the field turn the wrong way, and the rotor follows it backward.', hi: ['supply', 'motor'], fly: [['supplyIn', 'L1 L2 L3']]},
+        {t: 'Lockout/tagout: the disconnect is opened, locked, and tagged, and the motor coasts to a stop.', hi: ['supply'], m: {ns: 0, nr: 0}, set: {supply: {val: 'LOCKED OUT', sub: '0 V'}, field: {val: '0 RPM'}, rotor: {val: '0 RPM', sub: 'STOPPED'}}},
+        {t: 'Swap L1 and L2 at the motor terminals. The phase sequence is now reversed.', hi: ['supply', 'motor'], fly: [['supplyIn', 'L2 L1 L3']], set: {supply: {sub: 'L2 L1 L3'}}},
+        {t: 'Power back on: the field turns the other way at 1800 RPM, and the rotor follows at 1725 RPM. The boxes move the right way.', hi: ['motor', 'field', 'rotor'], fly: [['toField', 'Ns 1800'], ['toRotor', 'FORWARD']], m: {ns: m.Ns, nr: m.nr, dir: 1}, set: {supply: {val: '60 Hz', sub: 'L2 L1 L3'}, field: {val: '1800 RPM'}, rotor: {val: '1725 RPM', sub: 'FORWARD'}}}]};
+  })(),
+
+  (() => {
+    const m = MOT.CV2, ns45 = M.vfdNs(45, 4), nr45 = ns45 - M.VFD_SLIP_RPM, pairs = M.vfdNs(45, 2), s45 = M.slip(ns45, nr45), fr45 = M.fr(s45, 45);
+    return {id: 'vfd', topic: 'VFD speed control', mot: m, ask: 'field',
+      q: 'Rosa adds a variable frequency drive (VFD) to CV-2 (4 poles) so the conveyor can run slower. A VFD changes the frequency sent to the motor and keeps the volts per hertz constant. She sets it to 45 Hz. What is the synchronous speed now?',
+      pre: {supply: {nm: 'VFD', sub: 'V/Hz CONSTANT'}},
+      opts: [
+        ['Ns = 120 × 45 / 4 = ' + f0(ns45) + ' RPM', 10, 'Ns follows the frequency the VFD sends. 120 × 45 = ' + f0(120 * 45) + ', and ' + f0(120 * 45) + ' / 4 = ' + f0(ns45) + ' RPM. At rated load the slip speed stays about ' + M.VFD_SLIP_RPM + ' RPM, so the shaft turns at about ' + f0(nr45) + ' RPM.', f0(ns45) + ' RPM', ns45],
+        ['About ' + f0(nr45) + ' RPM', 5, 'That is the shaft speed at rated load (' + f0(ns45) + ' - ' + M.VFD_SLIP_RPM + '). The question asks for Ns, the speed of the field.', f0(nr45) + ' RPM (shaft)', nr45],
+        ['Ns = 120 × 45 / 2 = ' + f0(pairs) + ' RPM', 4, 'The formula is right, but the 4 poles were counted as 2 (the pole pairs). Use the number of poles.', f0(pairs) + ' RPM (pole pairs)', pairs],
+        ['Still 1800 RPM, because the poles did not change', 0, 'The poles did not change, but the frequency did. Ns = 120 × f / P, so a lower f gives a lower Ns.', '1800 RPM', 1800]],
+      m0: {ns: m.Ns, nr: m.nr, dir: 1},
+      steps: [
+        {t: 'Before: the VFD sends 60 Hz. Ns = 1800 RPM and the shaft turns at 1725 RPM at rated load.', hi: ['supply', 'motor'], fly: [['supplyIn', '60 Hz']]},
+        {t: 'Rosa sets 45 Hz on the keypad. The VFD lowers the voltage in step, so the volts per hertz stay the same.', hi: ['supply'], fly: [['supplyIn', '45 Hz']], set: {supply: {val: '45 Hz'}}},
+        {t: 'Ns = 120 × 45 / 4 = ' + f0(120 * 45) + ' / 4 = ' + f0(ns45) + ' RPM. The field arrow slows down.', hi: ['motor', 'field'], fly: [['toField', 'Ns ' + f0(ns45)]], m: {ns: ns45, nr: nr45}, set: {field: {val: f0(ns45) + ' RPM', sub: '120 × 45 / 4'}}},
+        {t: 'At rated load the slip speed stays about ' + M.VFD_SLIP_RPM + ' RPM: ' + f0(ns45) + ' - ' + M.VFD_SLIP_RPM + ' = ' + f0(nr45) + ' RPM. Slip = ' + M.VFD_SLIP_RPM + ' / ' + f0(ns45) + ' = ' + f2(M.pct(s45)) + '%, and fr = ' + f4(s45) + ' × 45 = ' + f1(fr45) + ' Hz.', hi: ['rotor', 'slip'], fly: [['toRotor', 'Nr ' + f0(nr45)], ['nrDown', f0(M.VFD_SLIP_RPM) + ' RPM']], set: {rotor: {val: f0(nr45) + ' RPM'}, slip: {val: f2(M.pct(s45)) + '%', sub: 'fr ' + f1(fr45) + ' Hz'}}}]};
+  })(),
+
+  (() => {
+    const m = MOT.F3, ns = m.Ns, s = m.s, fr = M.fr(s, 60), speedHz = M.fr(1 - s, 60);
+    return {id: 'copilot', topic: 'Check the Copilot answer', mot: m, ask: 'slip',
+      q: 'A classmate asked Microsoft Copilot about evaporator fan F-3 (6 poles, 1140 RPM, 60 Hz). Copilot answered: "At full speed the rotor frequency is 60 Hz, because the rotor is fed by the same 60 Hz supply." What is the error, and what is the right value?',
+      hide: {slip: {nm: 'ROTOR FREQ', val: '60 Hz?', sub: 'COPILOT SAID'}},
+      opts: [
+        ['The rotor is not fed by the supply. Its frequency is fr = s × f = ' + f2(s) + ' × 60 = ' + f1(fr) + ' Hz. 60 Hz is true only at standstill, when s = 1', 10, 'The rotor currents are induced by the field slipping past the bars. Ns = 120 × 60 / 6 = ' + f0(ns) + ' RPM, slip = (' + f0(ns) + ' - 1140) / ' + f0(ns) + ' = ' + f2(s) + ', so fr = ' + f2(s) + ' × 60 = ' + f1(fr) + ' Hz. Copilot described a motor at standstill, not at full speed.', f1(fr) + ' Hz', fr],
+        ['Copilot is right: the rotor and the stator always share the same frequency', 0, 'That is true for this motor only at standstill. Once the rotor turns, fr = s × f.', 'Copilot is right', 60],
+        ['The rotor frequency is ' + f0(speedHz) + ' Hz, the 60 Hz minus the slip', 3, f0(speedHz) + ' Hz = ' + f2(1 - s) + ' × 60 matches the rotor\'s own speed, not the frequency of the rotor currents. Use the slip itself: ' + f2(s) + ' × 60 = ' + f1(fr) + ' Hz.', f0(speedHz) + ' Hz', speedHz],
+        ['The rotor frequency is 0 Hz, because the rotor turns with the field', 4, 'Only a rotor at Ns would see 0 Hz, and an induction motor never gets there. At 1140 RPM the field still slips past at ' + f0(ns - m.nr) + ' RPM, so fr = ' + f1(fr) + ' Hz.', '0 Hz', 0]],
+      m0: {ns: ns, nr: m.nr, dir: 1},
+      steps: [
+        {t: 'Copilot\'s claim: 60 Hz in the rotor at full speed. Check it with the nameplate and the formulas.', hi: ['slip', 'supply'], fly: [['supplyIn', '60 Hz']], set: {slip: {nm: 'ROTOR FREQ', val: '?', sub: 'CHECKING'}}},
+        {t: 'Ns = 120 × 60 / 6 = ' + f0(ns) + ' RPM. The tachometer reads the rotor at 1140 RPM.', hi: ['motor', 'field', 'rotor'], fly: [['toField', 'Ns ' + f0(ns)], ['toRotor', 'Nr 1140']]},
+        {t: 'Slip = (' + f0(ns) + ' - 1140) / ' + f0(ns) + ' = ' + f0(ns - m.nr) + ' / ' + f0(ns) + ' = ' + f2(s) + ', or ' + f1(M.pct(s)) + '%.', hi: ['field', 'rotor', 'slip'], fly: [['nsDown', f0(ns - m.nr) + ' RPM']], set: {slip: {nm: 'SLIP', val: f2(M.pct(s)) + '%', sub: 'fr ?'}}},
+        {t: 'fr = s × f = ' + f2(s) + ' × 60 = ' + f1(fr) + ' Hz. Copilot\'s 60 Hz is the standstill value. Always check a Copilot answer with the formula before you write it down.', hi: ['slip', 'motor'], fly: [['toSlip', 'fr ' + f1(fr) + ' Hz']], set: {slip: {nm: 'SLIP', val: f2(M.pct(s)) + '%', sub: 'fr ' + f1(fr) + ' Hz'}}}]};
+  })()
+];
+// ROUNDS END
+
+const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = ms => new Promise(res => setTimeout(res, ms));
+let order = [], r = 0, picked = null, total = 0, log = [], G = null;
+let si = -1, token = 0, playing = false;
+
+// ---- board layout: one geometry shared by the 3D board and the flat 2D fallback ----
+const C = {power: '#E0B840', data: '#38B0E0', field: '#9FE7FF', oper: '#A9B4FF', ok: '#6FD49B', bad: '#F0786A', ask: '#38B0E0'};
+const PH = ['#E0B840', '#38B0E0', '#A9B4FF'];        // coil colors for phases A, B, C
+const MC = {x: 0, z: 0, ro: 2.05, ri: 1.55, rr: 1.3}; // motor: stator outer and inner radius, rotor radius
+const COMP = {
+  supply: {x: -4.9, z: -2.4, w: 2.3, d: 1.2, nm: 'SUPPLY'},
+  plate: {x: -4.9, z: 2.4, w: 2.3, d: 1.2, nm: 'NAMEPLATE', body: '#2a2f45'},
+  field: {x: 4.9, z: -2.4, w: 2.3, d: 1.2, nm: 'FIELD Ns'},
+  rotor: {x: 4.9, z: 0, w: 2.3, d: 1.2, nm: 'ROTOR Nr'},
+  slip: {x: 4.9, z: 2.4, w: 2.3, d: 1.2, nm: 'SLIP'}
+};
+const LINK = {
+  feed: {k: 'power', n: 3, p: [{x: -3.75, z: -2.4}, {x: -2.5, z: -2.4}, {x: -1.45, z: -1.45}]},
+  plate: {k: 'data', n: 2, p: [{x: -3.75, z: 2.4}, {x: -2.5, z: 2.4}, {x: -1.45, z: 1.45}]},
+  top: {k: 'data', n: 2, p: [{x: 1.45, z: -1.45}, {x: 2.5, z: -2.4}, {x: 3.75, z: -2.4}]},
+  mid: {k: 'data', n: 2, p: [{x: 2.05, z: 0}, {x: 3.75, z: 0}]},
+  bot: {k: 'data', n: 2, p: [{x: 1.45, z: 1.45}, {x: 2.5, z: 2.4}, {x: 3.75, z: 2.4}]},
+  calc1: {k: 'oper', n: 2, p: [{x: 4.9, z: -1.8}, {x: 4.9, z: -0.6}]},
+  calc2: {k: 'oper', n: 2, p: [{x: 4.9, z: 0.6}, {x: 4.9, z: 1.8}]}
+};
+// packet routes: [points, traces that glow]
+const PATHS = {
+  supplyIn: [LINK.feed.p, ['feed']], plateIn: [LINK.plate.p, ['plate']],
+  toField: [LINK.top.p, ['top']], toRotor: [LINK.mid.p, ['mid']], toSlip: [LINK.bot.p, ['bot']],
+  nsDown: [[{x: 4.9, z: -1.8}, {x: 4.9, z: 1.8}], ['calc1', 'calc2']], nrDown: [LINK.calc2.p, ['calc2']]
+};
+// motor speeds the board shows (RPM, direction), tweened between steps
+const MS = {ns: 0, nr: 0, dir: 1}, ANG = {fa: 0.6, ra: 0};
+const VIS = 0.55 * 2 * Math.PI / 3600;              // 3600 RPM shows as 0.55 turns a second
+function setMotor(t, instant) {
+  if (t.dir != null) MS.dir = t.dir;
+  if (hasGSAP && !instant && !RM) gsap.to(MS, {ns: t.ns, nr: t.nr, duration: 1.4, ease: 'power2.inOut', overwrite: true});
+  else { if (hasGSAP) gsap.killTweensOf(MS); MS.ns = t.ns; MS.nr = t.nr; }
+}
+function advance(dtMs) { if (RM) return; const k = Math.min(dtMs, 100) / 1000; ANG.fa += MS.dir * MS.ns * VIS * k; ANG.ra += MS.dir * MS.nr * VIS * k; }
+
+function merge(base, add) { const out = {}; Object.keys(base).forEach(k => { out[k] = Object.assign({}, base[k], add && add[k] ? add[k] : {}); }); return out; }
+function baseCfg(R) { return merge(chipsFor(R.mot), R.pre); }
+function cfgBefore(R) { return merge(baseCfg(R), R.hide); }
+function cfgAfter(R, upto) { let c = merge(baseCfg(R), R.post); for (let i = 0; i < upto; i++) if (R.steps[i].set) c = merge(c, R.steps[i].set); return c; }
+function motorAfter(R, upto) { const m = Object.assign({}, R.m0); for (let i = 0; i < upto; i++) Object.assign(m, R.steps[i].m || {}); return m; }
+
+// ---- 3D board with the Lab3D kit ----
+function board3D(stage) {
+  const lab = Lab3D(stage, {board: {w: 13.2, d: 7.6, silk: 'BISCAYNE COLD STORAGE  MOTOR BENCH  LSN-MOTORS', seed: 9},
+    views: {overview: {pos: [0, 13, 4.6], tgt: [0, 0, 0.5], want: 1.5}}});
+  if (!lab) return null;
+  const T = lab.T, mats = {}, recs = {};
+  Object.entries(LINK).forEach(([k, l]) => { mats[k] = lab.busMat(C[l.k]); lab.trace(l.p, l.n, mats[k]); });
+  Object.entries(COMP).forEach(([k, o]) => { recs[k] = lab.chip(k, o); });
+  // the motor: stator ring with coil groups, the field arrow, and a squirrel-cage rotor
+  const root = new T.Group(); root.position.set(MC.x, 0, MC.z); lab.scene.add(root);
+  const stMat = new T.MeshStandardMaterial({color: 0x2c3570, roughness: .45, metalness: .55, emissive: new T.Color(0xffffff), emissiveIntensity: 0});
+  const sh = new T.Shape(); sh.absarc(0, 0, MC.ro, 0, Math.PI * 2, false);
+  const hole = new T.Path(); hole.absarc(0, 0, MC.ri, 0, Math.PI * 2, true); sh.holes.push(hole);
+  const ring = new T.Mesh(new T.ExtrudeGeometry(sh, {depth: 0.5, bevelEnabled: false, curveSegments: 72}), stMat);
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; ring.castShadow = true; ring.receiveShadow = true; root.add(ring);
+  for (let k = 0; k < 6; k++) {
+    const a = k * Math.PI / 3, col = new T.Color(PH[k % 3]);
+    const cm = new T.MeshStandardMaterial({color: col.clone().multiplyScalar(.55), emissive: col, emissiveIntensity: .28, roughness: .4, metalness: .5});
+    const c = new T.Mesh(lab.unit, cm); c.scale.set(0.34, 0.2, 0.66); c.position.set(Math.cos(a) * 1.8, 0.62, Math.sin(a) * 1.8); c.rotation.y = -a; c.castShadow = true; root.add(c);
+  }
+  const rotor = new T.Group(); root.add(rotor);
+  const core = new T.Mesh(new T.CylinderGeometry(MC.rr, MC.rr, 0.44, 48), new T.MeshStandardMaterial({color: 0x1c2138, roughness: .5, metalness: .5}));
+  core.position.y = 0.25; core.castShadow = true; rotor.add(core);
+  const barMat = new T.MeshStandardMaterial({color: 0xc9ced1, roughness: .3, metalness: .85});
+  for (let k = 0; k < 18; k++) { const a = k * Math.PI * 2 / 18, b = new T.Mesh(lab.unit, barMat); b.scale.set(0.1, 0.47, 0.15); b.position.set(Math.cos(a) * 1.2, 0.26, Math.sin(a) * 1.2); b.rotation.y = -a; rotor.add(b); }
+  const endRing = new T.Mesh(new T.TorusGeometry(1.2, 0.06, 8, 48), barMat); endRing.rotation.x = Math.PI / 2; endRing.position.y = 0.49; rotor.add(endRing);
+  const shaft = new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.9, 24), barMat); shaft.position.y = 0.45; rotor.add(shaft);
+  const tape = new T.Mesh(lab.unit, new T.MeshBasicMaterial({color: 0xffffff})); tape.scale.set(0.55, 0.02, 0.18); tape.position.set(0.72, 0.485, 0); rotor.add(tape);
+  const arrow = new T.Group(); arrow.position.y = 1.0; root.add(arrow);
+  const am = new T.MeshStandardMaterial({color: 0x9fe7ff, emissive: new T.Color(0x9fe7ff), emissiveIntensity: 1.0, roughness: .3});
+  const bar = new T.Mesh(lab.unit, am); bar.scale.set(2.3, 0.06, 0.14); bar.position.x = -0.12; arrow.add(bar);
+  const tip = new T.Mesh(new T.ConeGeometry(0.22, 0.5, 20), am); tip.rotation.z = -Math.PI / 2; tip.position.x = 1.25; arrow.add(tip);
+  lab.label('N', 'zone', 1.7, 0, 0, arrow).style.setProperty('--c', C.field);
+  lab.label('S', 'zone', -1.55, 0, 0, arrow).style.setProperty('--c', C.field);
+  const zoneEl = lab.zone('stator · rotor', 0, 2.55, C.field);
+  recs.motor = {key: 'motor', cell: false, g: root, mat: stMat, el: zoneEl, h: 0.5, x: 0, z: 0};
+  gsap.ticker.add((time, dt) => { advance(dt); arrow.rotation.y = ANG.fa; rotor.rotation.y = ANG.ra; });
+  lab.finishPins(); lab.intro();
+  return {
+    config(cfg) { Object.keys(cfg).forEach(k => { const rec = recs[k], v = cfg[k]; if (!rec) return; rec.el.querySelector('.nm').textContent = v.nm; rec.val.textContent = v.val; rec.sub.textContent = v.sub || ''; }); },
+    mark(keys, color) { lab.clear(); keys.forEach(k => lab.hi(recs[k], color)); },
+    run(step, color) {
+      lab.clear(); lab.clearPackets();
+      (step.hi || []).forEach(k => lab.hi(recs[k], color));
+      const last = (step.hi || []).filter(k => k !== 'motor').pop(); if (last) lab.pop(recs[last]);
+      const flights = step.fly || [];
+      if (!flights.length) return wait(900);
+      return new Promise(res => {
+        const tl = gsap.timeline();
+        flights.forEach(([p, text]) => { const P = PATHS[p]; tl.call(() => { P[1].forEach(k => lab.glowBus(mats[k])); }); tl.add(lab.fly(P[0], text, color)); });
+        tl.call(res);
+      });
+    },
+    stop() { lab.clearPackets(); lab.clear(); }
+  };
+}
+
+// ---- flat 2D board (no WebGL, Three.js, or GSAP): same layout as inline SVG ----
+function board2D(stage) {
+  $('#nogl').hidden = false;
+  const NS = 'http://www.w3.org/2000/svg', S = 36, X = x => (x + 6.6) * S, Y = z => (z + 3.8) * S;
+  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 475 274'); svg.setAttribute('class', 'flat');
+  svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Flat board: the supply, the nameplate, the motor with its rotating field and rotor, and the speed and slip values');
+  let h = '<rect x="2" y="2" width="471" height="270" rx="12" fill="#1a2257" stroke="#3a4690"/>';
+  Object.entries(LINK).forEach(([k, l]) => { h += '<polyline id="ln-' + k + '" points="' + l.p.map(p => X(p.x) + ',' + Y(p.z)).join(' ') + '" fill="none" stroke="' + C[l.k] + '" stroke-opacity=".5" stroke-width="' + (l.n > 2 ? 5 : 3) + '" stroke-linejoin="round"/>'; });
+  const cx = X(MC.x), cy = Y(MC.z), rm = (MC.ro + MC.ri) / 2 * S;
+  h += '<g transform="translate(' + cx + ',' + cy + ')">';
+  h += '<circle id="ring2" r="' + rm + '" fill="none" stroke="#2c3570" stroke-width="' + ((MC.ro - MC.ri) * S) + '"/><circle id="ringEdge2" r="' + (MC.ro * S) + '" fill="none" stroke="#4a5490" stroke-width="1.5"/>';
+  for (let k = 0; k < 6; k++) { const a = k * 60; h += '<rect x="' + (rm - 6) + '" y="-12" width="12" height="24" rx="2" fill="' + PH[k % 3] + '" fill-opacity=".8" transform="rotate(' + a + ')"/>'; }
+  h += '<g id="rot2"><circle r="' + (MC.rr * S) + '" fill="#1c2138" stroke="#c9ced1" stroke-width="2"/>';
+  for (let k = 0; k < 18; k++) { const a = k * 20 * Math.PI / 180; h += '<circle cx="' + (Math.cos(a) * 1.2 * S).toFixed(1) + '" cy="' + (Math.sin(a) * 1.2 * S).toFixed(1) + '" r="2.6" fill="#c9ced1"/>'; }
+  h += '<rect x="14" y="-3" width="20" height="6" fill="#ffffff"/><circle r="7" fill="#c9ced1"/></g>';
+  h += '<g id="arr2"><line x1="-42" y1="0" x2="34" y2="0" stroke="' + C.field + '" stroke-width="4" stroke-linecap="round"/><polygon points="34,-8 50,0 34,8" fill="' + C.field + '"/>' +
+    '<text x="58" y="4" fill="' + C.field + '" font-size="11" font-weight="600" text-anchor="middle">N</text><text x="-52" y="4" fill="' + C.field + '" font-size="11" font-weight="600" text-anchor="middle">S</text></g>';
+  h += '</g><text id="mz2" x="' + cx + '" y="' + (Y(2.62)) + '" fill="' + C.field + '" font-size="9" text-anchor="middle" letter-spacing="1.5">STATOR · ROTOR</text>';
+  Object.entries(COMP).forEach(([k, o]) => {
+    const x = X(o.x - o.w / 2), y = Y(o.z - o.d / 2), w = o.w * S, d = o.d * S, ccx = X(o.x), ccy = Y(o.z);
+    h += '<g id="c-' + k + '" data-w="' + w + '" data-cy="' + ccy + '"><rect class="cb" x="' + x + '" y="' + y + '" width="' + w + '" height="' + d + '" rx="4" fill="' + (o.body || '#161a2e') + '" stroke="#4a5490" stroke-width="1.5"/>' +
+      '<text class="nm" x="' + ccx + '" y="' + (y - 4) + '" fill="#aeb3c9" font-size="9" text-anchor="middle" letter-spacing=".6"></text>' +
+      '<text class="vl" x="' + ccx + '" y="' + (ccy + 1) + '" fill="#eef1fa" font-size="13" font-weight="600" text-anchor="middle"></text>' +
+      '<text class="sb" x="' + ccx + '" y="' + (ccy + 14) + '" fill="#aeb3c9" font-size="8" text-anchor="middle"></text></g>';
+  });
+  h += '<g id="pk2" visibility="hidden"><circle r="12" fill="#fff" opacity=".18"/><circle r="6.5" fill="#fff"/><rect class="pb" x="-30" y="-29" width="60" height="16" rx="3"/><text class="pt" y="-17" font-size="11" font-weight="700" text-anchor="middle" fill="#06120f"></text></g>';
+  svg.innerHTML = h; stage.appendChild(svg);
+  const pk = svg.querySelector('#pk2'), dots = pk.querySelectorAll('circle'), pb = pk.querySelector('.pb'), pt = pk.querySelector('.pt');
+  const rot = svg.querySelector('#rot2'), arr = svg.querySelector('#arr2'), deg = a => (-a * 180 / Math.PI).toFixed(2);
+  let raf = 0, last = performance.now();
+  (function spin(now) { advance(now - last); last = now; arr.setAttribute('transform', 'rotate(' + deg(ANG.fa) + ')'); rot.setAttribute('transform', 'rotate(' + deg(ANG.ra) + ')'); requestAnimationFrame(spin); })(last);
+  function clearHi() {
+    svg.querySelectorAll('.cb').forEach(b => { b.setAttribute('stroke', '#4a5490'); b.setAttribute('stroke-width', '1.5'); });
+    svg.querySelector('#ringEdge2').setAttribute('stroke', '#4a5490'); svg.querySelector('#ringEdge2').setAttribute('stroke-width', '1.5');
+    svg.querySelectorAll('polyline').forEach(l => l.setAttribute('stroke-opacity', '.5'));
+  }
+  function hi(keys, color) {
+    keys.forEach(k => {
+      const b = k === 'motor' ? svg.querySelector('#ringEdge2') : svg.querySelector('#c-' + k + ' .cb');
+      if (b) { b.setAttribute('stroke', color); b.setAttribute('stroke-width', '3.5'); }
+    });
+  }
+  function flyOne(pts, text, color) {
+    return new Promise(res => {
+      const P = pts.map(p => [X(p.x), Y(p.z)]); let L = 0; const seg = [];
+      for (let i = 1; i < P.length; i++) { const s = Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); seg.push(s); L += s; }
+      dots[0].setAttribute('fill', color); dots[1].setAttribute('fill', color); pb.setAttribute('fill', color); pt.textContent = text;
+      const tw = Math.max(40, text.length * 7 + 12); pb.setAttribute('x', -tw / 2); pb.setAttribute('width', tw);
+      const put = d => { let i = 0; while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; } const f = seg[i] ? Math.min(1, d / seg[i]) : 1; pk.setAttribute('transform', 'translate(' + (P[i][0] + (P[i + 1][0] - P[i][0]) * f) + ',' + (P[i][1] + (P[i + 1][1] - P[i][1]) * f) + ')'); };
+      pk.setAttribute('visibility', 'visible');
+      if (RM) { put(L); setTimeout(() => { pk.setAttribute('visibility', 'hidden'); res(); }, 500); return; }
+      const dur = Math.max(700, Math.min(1800, L * 9)), t0 = performance.now();
+      const tick = now => { const k = Math.min(1, (now - t0) / dur); put(L * k); if (k < 1) raf = requestAnimationFrame(tick); else { pk.setAttribute('visibility', 'hidden'); res(); } };
+      raf = requestAnimationFrame(tick);
+    });
+  }
+  return {
+    config(cfg) {
+      Object.keys(cfg).forEach(k => {
+        const g = svg.querySelector('#c-' + k), v = cfg[k]; if (!g) return;
+        g.querySelector('.nm').textContent = v.nm; g.querySelector('.sb').textContent = v.sub || '';
+        const vl = g.querySelector('.vl'); vl.textContent = v.val;
+        vl.setAttribute('font-size', Math.max(8, Math.min(13, (+g.dataset.w - 8) / (Math.max(1, String(v.val).length) * 0.62))).toFixed(1));
+        vl.setAttribute('y', +g.dataset.cy + (v.sub ? 1 : 5));
+      });
+    },
+    mark(keys, color) { clearHi(); hi(keys, color); },
+    async run(step, color) {
+      clearHi(); hi(step.hi || [], color);
+      for (const [p, text] of (step.fly || [])) { const P = PATHS[p]; P[1].forEach(k => svg.querySelector('#ln-' + k).setAttribute('stroke-opacity', '1')); await flyOne(P[0], text, color); }
+      if (!(step.fly || []).length) await wait(900);
+    },
+    stop() { cancelAnimationFrame(raf); pk.setAttribute('visibility', 'hidden'); clearHi(); }
+  };
+}
+
+// ---- the explanation: steps with Back, Step, and Play ----
+function verdict() { const l = log[r]; return !!l && l.pts === l.max; }
+function stepColor() { return verdict() ? C.ok : C.bad; }
+function setStepButtons() {
+  const R = ROUNDS[order[r]], checked = !!log[r];
+  $('#btnPlay').disabled = !checked || playing; $('#btnBack').disabled = !checked || playing || si <= 0; $('#btnStep').disabled = !checked || playing || si >= R.steps.length - 1;
+  $('#btnPlay').textContent = playing ? 'Playing...' : si >= R.steps.length - 1 ? 'Play again' : 'Play the explanation';
+}
+async function showStep(i) {
+  const R = ROUNDS[order[r]], my = ++token, s = R.steps[i], ok = verdict();
+  si = i; G.stop(); G.config(cfgAfter(R, i)); setMotor(motorAfter(R, i + 1));
+  $('#cap').style.setProperty('--cap', ok ? 'var(--ok)' : 'var(--bad)');
+  $('#capT').textContent = 'Step ' + (i + 1) + ' of ' + R.steps.length + (ok ? ' · your answer matches' : ' · review the best answer');
+  $('#capB').textContent = s.t; setStepButtons();
+  await G.run(s, stepColor());
+  if (my !== token) return false;
+  G.config(cfgAfter(R, i + 1));
+  return true;
+}
+async function play() {
+  const R = ROUNDS[order[r]]; playing = true; const my = token + 1; setStepButtons();
+  // start from the round's opening state so Play again shows the whole story
+  setMotor(motorAfter(R, 0), true);
+  for (let i = 0; i < R.steps.length; i++) {
+    const done = await showStep(i); if (!done || token !== my + i) { playing = false; setStepButtons(); return; }
+    if (i < R.steps.length - 1) { await wait(RM ? 1800 : Math.min(3200, 1200 + R.steps[i].t.length * 12)); if (token !== my + i) { playing = false; setStepButtons(); return; } }
+  }
+  playing = false; setStepButtons();
+}
+function stopPlay() { token++; playing = false; if (G) G.stop(); }
+
+// ---- the challenge ----
+function drawProgress() { $('#prog').innerHTML = ROUNDS.map((_, i) => { const l = log[i]; return '<i class="' + (l ? (l.pts === l.max ? 'ok' : l.pts > 0 ? 'part' : 'bad') : i === r ? 'now' : '') + '"></i>'; }).join(''); }
+function showRound() {
+  stopPlay();
+  const R = ROUNDS[order[r]]; picked = null; si = -1;
+  $('#qTitle').textContent = 'Round ' + (r + 1) + ' of ' + ROUNDS.length; $('#qTopic').textContent = R.topic; $('#qText').textContent = R.q; $('#fb').innerHTML = '';
+  $('#motorName').textContent = R.mot.name;
+  R._opts = shuffle(R.opts);
+  $('#opts').innerHTML = R._opts.map((o, i) => '<button type="button" aria-pressed="false" data-i="' + i + '"><span class="key">' + 'ABCD'[i] + '</span><span>' + esc(o[0]) + '</span></button>').join('');
+  $('#btnCheck').disabled = false; $('#btnNext').disabled = true; $('#btnNext').textContent = 'Next round';
+  G.config(cfgBefore(R)); G.mark([R.ask], C.ask); setMotor(R.m0, true);
+  $('#cap').style.removeProperty('--cap'); $('#capT').textContent = 'The motor in this round';
+  $('#capB').textContent = 'The arrow is the field turning at Ns and the rotor turns at Nr. The chip marked in blue is the one this round is about. After you check your answer, play the explanation.';
+  setStepButtons(); drawProgress();
+}
+$('#opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; picked = +b.dataset.i; document.querySelectorAll('#opts button').forEach(x => { x.setAttribute('aria-pressed', x === b); x.classList.toggle('sel', x === b); }); });
+$('#btnCheck').addEventListener('click', () => {
+  if (picked == null) { $('#fb').innerHTML = '<div class="feedback info">Pick an answer first.</div>'; return; }
+  const R = ROUNDS[order[r]], o = R._opts[picked], max = Math.max(...R.opts.map(x => x[1])), best = R._opts.find(x => x[1] === max);
+  total += o[1]; log[r] = {topic: R.topic, a: o[3], best: best[3], pts: o[1], max: max};
+  document.querySelectorAll('#opts button').forEach((b, i) => { b.disabled = true; b.classList.remove('sel'); if (R._opts[i] === best) b.classList.add('right'); else if (i === picked) b.classList.add('wrong'); });
+  const cls = o[1] === max ? 'ok' : o[1] > 0 ? 'info' : 'bad';
+  $('#fb').innerHTML = '<div class="feedback ' + cls + '"><b>' + o[1] + ' of ' + max + ' points.</b> ' + esc(o[2]) + (o === best ? '' : '<p class="best"><b>Best answer:</b> ' + esc(best[0]) + '. ' + esc(best[2]) + '</p>') + '</div>';
+  $('#score').textContent = total; $('#btnCheck').disabled = true; $('#btnNext').disabled = false; $('#btnNext').textContent = r === ROUNDS.length - 1 ? 'See results' : 'Next round';
+  G.config(cfgAfter(R, 0)); G.mark([R.ask], o === best ? C.ok : C.bad);
+  $('#cap').style.setProperty('--cap', o === best ? 'var(--ok)' : 'var(--bad)');
+  $('#capT').textContent = o === best ? 'Your answer matches' : 'Review the best answer';
+  $('#capB').textContent = 'The board now shows the real values. Press Play to watch the math step by step, or use Step and Back to go at your own pace.';
+  drawProgress(); setStepButtons();
+});
+$('#btnPlay').addEventListener('click', () => { if (!log[r] || playing) return; play(); });
+$('#btnStep').addEventListener('click', () => { if (!log[r]) return; stopPlay(); showStep(Math.min(si + 1, ROUNDS[order[r]].steps.length - 1)); });
+$('#btnBack').addEventListener('click', () => { if (!log[r]) return; stopPlay(); showStep(Math.max(si - 1, 0)); });
+$('#btnNext').addEventListener('click', () => { if (r < ROUNDS.length - 1) { r++; showRound(); } else finishAll(); });
+function finishAll() {
+  stopPlay();
+  $('#results').hidden = false; $('#qTitle').textContent = 'Finished'; $('#qTopic').textContent = 'All ten motors'; $('#qText').textContent = 'Your score: ' + total + ' out of 100. The table below shows every round.'; $('#opts').innerHTML = ''; $('#fb').innerHTML = ''; $('#btnCheck').disabled = true; $('#btnNext').disabled = true;
+  $('#btnPlay').disabled = true; $('#btnStep').disabled = true; $('#btnBack').disabled = true;
+  $('#cap').style.removeProperty('--cap'); $('#capT').textContent = 'All rounds done'; $('#capB').textContent = 'Check the results table below. Press Try again for a new order of rounds and answers.';
+  $('#resTable').innerHTML = '<tr><th>Round</th><th>Topic</th><th>Your answer</th><th>Points</th></tr>' + log.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.topic) + '</td><td>' + esc(l.a) + (l.pts === l.max ? '' : '<span class="muted bestcell">Best: ' + esc(l.best) + '</span>') + '</td><td class="pts ' + (l.pts === l.max ? 'ok' : l.pts > 0 ? 'part' : 'bad') + '">' + l.pts + ' / ' + l.max + '</td></tr>').join('') + '<tr class="tot"><td colspan="3"><b>Total</b></td><td><b>' + total + ' / 100</b></td></tr>';
+  $('#resNote').textContent = total === 100 ? 'Every motor checks out. Use the same steps on the nameplate worksheet for the activity sheet.' : total >= 70 ? 'Good work. Review the rounds marked in gold or coral, then try again for 100.' : 'Review the feedback for each round, then try again. Every attempt shuffles the rounds and the answers.';
+  drawProgress(); $('#results').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'});
+}
+function start() { order = shuffle(ROUNDS.map((_, i) => i)); r = 0; total = 0; log = []; $('#score').textContent = 0; $('#results').hidden = true; $('#specRounds').textContent = ROUNDS.length; showRound(); }
+$('#btnAgain').addEventListener('click', () => { start(); document.querySelector('.grid.two').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); });
+try { G = board3D($('#stage')); } catch (e) { console.error(e); G = null; }
+if (!G) { $('#stage').querySelectorAll('canvas,.labels,.zoomctl').forEach(n => n.remove()); G = board2D($('#stage')); }
+// hooks for automated tests: the points of the current options and the playback state
+window.__slip = {points: () => (ROUNDS[order[r]]._opts || []).map(o => o[1]), id: () => ROUNDS[order[r]].id, round: () => r, total: () => total, playing: () => playing, step: () => si, mode: () => ($('#stage svg.flat') ? '2d' : '3d'), motor: () => ({ns: MS.ns, nr: MS.nr, dir: MS.dir})};
+start();
+})();
+</script>
+</body>
+</html>
